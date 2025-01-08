@@ -1,0 +1,2 @@
+# LootGoblin
+ EverQuest Raid Helper
