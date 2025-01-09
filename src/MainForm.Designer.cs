@@ -36,6 +36,8 @@
             tabPage2 = new TabPage();
             trv_LootRolls = new TreeView();
             btn_ClearLootRolls = new Button();
+            tabPage3 = new TabPage();
+            dataGridView1 = new DataGridView();
             btn_LogMonitor = new Button();
             label2 = new Label();
             txtbx_BidChannel = new TextBox();
@@ -44,12 +46,15 @@
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
+            tabPage3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // tabControl1
             // 
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
+            tabControl1.Controls.Add(tabPage3);
             tabControl1.Location = new Point(12, 12);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -94,7 +99,7 @@
             tabPage2.Padding = new Padding(3);
             tabPage2.Size = new Size(343, 508);
             tabPage2.TabIndex = 1;
-            tabPage2.Text = "Rolls";
+            tabPage2.Text = "Player Rolls";
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // trv_LootRolls
@@ -114,13 +119,31 @@
             btn_ClearLootRolls.UseVisualStyleBackColor = true;
             btn_ClearLootRolls.Click += btn_ClearLootRolls_Click;
             // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(dataGridView1);
+            tabPage3.Location = new Point(4, 24);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Size = new Size(343, 508);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "Looted Iems";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // dataGridView1
+            // 
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView1.Location = new Point(3, 3);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.Size = new Size(340, 502);
+            dataGridView1.TabIndex = 0;
+            // 
             // btn_LogMonitor
             // 
             btn_LogMonitor.Location = new Point(12, 608);
             btn_LogMonitor.Name = "btn_LogMonitor";
             btn_LogMonitor.Size = new Size(343, 24);
             btn_LogMonitor.TabIndex = 5;
-            btn_LogMonitor.Text = "Start Monitoring Log\"";
+            btn_LogMonitor.Text = "Start Monitoring Log";
             btn_LogMonitor.UseVisualStyleBackColor = true;
             btn_LogMonitor.Click += btn_LogMonitor_Click;
             // 
@@ -174,6 +197,8 @@
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             tabPage2.ResumeLayout(false);
+            tabPage3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -192,5 +217,7 @@
         private Button btn_ClearLootRolls;
         private TextBox txtbx_LogFile;
         private Button btn_LocateLog;
+        private TabPage tabPage3;
+        private DataGridView dataGridView1;
     }
 }
