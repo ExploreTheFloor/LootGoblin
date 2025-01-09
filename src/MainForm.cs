@@ -169,19 +169,24 @@ namespace LootGoblin
             trv_LootRolls.Sort();
         }
 
-        //public void ParseLootedItems(string messageToProcess)
-        //{
-        //    if (!messageToProcess.Contains("**"))
-        //        return;
-        //    try
-        //    {
-        //        messageToProcess = messageToProcess.RemoveLastCharacter();
-        //        if (messageToProcess.Contains("**A Magic Die is rolled by"))
-        //        {
-        //            _currentRandomLootPlayerName = messageToProcess[54..].Trim();
-        //        }
-        //    }
-        //}
+        public void ParseLootedItems(string messageToProcess)
+        {
+            if (!messageToProcess.Contains("**"))
+                return;
+            try
+            {
+                messageToProcess = messageToProcess.RemoveLastCharacter();
+                if (messageToProcess.Contains("**A Magic Die is rolled by"))
+                {
+                    _currentRandomLootPlayerName = messageToProcess[54..].Trim();
+                }
+            }
+            catch
+            {
+
+            }
+        }
+
         IEnumerable<TreeNode> Collect(TreeNodeCollection nodes)
         {
             foreach (TreeNode node in nodes)
