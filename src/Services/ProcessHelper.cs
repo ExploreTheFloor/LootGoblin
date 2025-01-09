@@ -6,15 +6,15 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LootGoblin
+namespace LootGoblin.Services
 {
     internal class ProcessHelper
     {
         [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
+        private static extern nint GetForegroundWindow();
 
         [DllImport("user32.dll")]
-        public static extern IntPtr GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+        public static extern nint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
 
         private bool IsWindowActive(string processName)
         {
@@ -39,7 +39,7 @@ namespace LootGoblin
         public static Process? GetProcess(string processName)
         {
             var proc = Process.GetProcesses().FirstOrDefault(x => x.ProcessName.ToLower().Contains(processName));
-            if (proc == null || proc.MainWindowHandle.Equals(IntPtr.Zero))
+            if (proc == null || proc.MainWindowHandle.Equals(nint.Zero))
                 return null;
             return proc;
         }

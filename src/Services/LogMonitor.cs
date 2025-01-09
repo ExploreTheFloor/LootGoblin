@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace LootGoblin
+namespace LootGoblin.Services
 {
     public class LogMonitor
     {
@@ -30,7 +30,7 @@ namespace LootGoblin
         /// </summary>
         public LogMonitor(string logPath)
         {
-            this.LogPath = logPath;
+            LogPath = logPath;
         }
 
         /// <summary>

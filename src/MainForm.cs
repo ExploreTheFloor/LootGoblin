@@ -1,5 +1,7 @@
+using LootGoblin.Services;
 using System.Collections;
 using System.Data;
+using System.Linq.Expressions;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -132,7 +134,7 @@ namespace LootGoblin
         {
             if (trv_LootRolls.InvokeRequired)
             {
-                trv_DkpBids.BeginInvoke(new Action(delegate
+                trv_LootRolls.BeginInvoke(new Action(delegate
                 {
                     UpdateLootRolls(rollRange, playerName, playerRoll);
                 }));
@@ -171,20 +173,26 @@ namespace LootGoblin
 
         public void ParseLootedItems(string messageToProcess)
         {
-            if (!messageToProcess.Contains("**"))
+            if (!messageToProcess.Contains("] --") && !messageToProcess.Contains("has looted a"))
                 return;
             try
             {
-                messageToProcess = messageToProcess.RemoveLastCharacter();
-                if (messageToProcess.Contains("**A Magic Die is rolled by"))
-                {
-                    _currentRandomLootPlayerName = messageToProcess[54..].Trim();
-                }
-            }
-            catch
-            {
+                var trimmedDateTime = messageToProcess.Replace("--", "")[26..].Replace("has looted a ", "").RemoveLastCharacter().Trim();
+                var playerName = trimmedDateTime.Split(" ")[0];
+                var lootedItem = trimmedDateTime[playerName.Length..].Trim();
+                UpdateLootedItems(playerName, lootedItem);
+            }catch{}
+        }
 
+        public void UpdateLootedItems(string playerName, string lootedItem)
+        {
+            if (dgv_LootedItems.InvokeRequired)
+            {
+                dgv_LootedItems.BeginInvoke(new Action(delegate { UpdateLootedItems(playerName, lootedItem); }));
+                return;
             }
+            dgv_LootedItems.Rows.Add(DateTime.Now.ToShortTimeString(), playerName, lootedItem);
+            dgv_LootedItems.Update();
         }
 
         IEnumerable<TreeNode> Collect(TreeNodeCollection nodes)
@@ -221,6 +229,7 @@ namespace LootGoblin
                     _logMonitor.BeginMonitoring();
                 _logMonitor.MessageReceived += ParseDkpBids;
                 _logMonitor.MessageReceived += ParseLootRolls;
+                _logMonitor.MessageReceived += ParseLootedItems;
             }
             else
             {
@@ -229,6 +238,7 @@ namespace LootGoblin
                     _logMonitor.StopMonitoring();
                 _logMonitor.MessageReceived += ParseDkpBids;
                 _logMonitor.MessageReceived += ParseLootRolls;
+                _logMonitor.MessageReceived += ParseLootedItems;
             }
         }
         private void test()
@@ -273,6 +283,14 @@ namespace LootGoblin
             ParseLootRolls($"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
             ParseLootRolls($"[Tue Jan 07 20:42:25 2025] **A Magic Die is rolled by Katrenia.");
             ParseLootRolls($"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
+
+            ParseLootedItems("[Tue Jan 07 23:02:17 2025] --Brodin has looted a Noise Maker.--");
+            ParseLootedItems("[Tue Jan 07 22:58:58 2025] --Keliae has looted a Noise Maker.--");
+            ParseLootedItems("[Wed Jan 08 09:49:19 2025] --Spideroxy has looted a Salil's Writ Pg. 174.--");
+            ParseLootedItems("[Wed Jan 08 09:49:21 2025] --Atlasius has looted a Green Silken Drape.--");
+            ParseLootedItems("[Wed Jan 08 14:23:56 2025] --Duvos has looted a Black Henbane.--");
+            ParseLootedItems("[Mon Jan 06 20:34:55 2025] --Shadowsong has looted a Spell: Talisman of the Cat.--");
+            ParseLootedItems("[Mon Jan 06 20:44:26 2025] --Arrecha has looted a Fire Opal.--");
         }
         private void btn_ClearDkpBids_Click(object sender, EventArgs e)
         {

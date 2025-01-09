@@ -37,7 +37,10 @@
             trv_LootRolls = new TreeView();
             btn_ClearLootRolls = new Button();
             tabPage3 = new TabPage();
-            dataGridView1 = new DataGridView();
+            dgv_LootedItems = new DataGridView();
+            Time = new DataGridViewTextBoxColumn();
+            Player = new DataGridViewTextBoxColumn();
+            Item = new DataGridViewTextBoxColumn();
             btn_LogMonitor = new Button();
             label2 = new Label();
             txtbx_BidChannel = new TextBox();
@@ -47,7 +50,7 @@
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgv_LootedItems).BeginInit();
             SuspendLayout();
             // 
             // tabControl1
@@ -121,7 +124,7 @@
             // 
             // tabPage3
             // 
-            tabPage3.Controls.Add(dataGridView1);
+            tabPage3.Controls.Add(dgv_LootedItems);
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
             tabPage3.Size = new Size(343, 508);
@@ -129,13 +132,33 @@
             tabPage3.Text = "Looted Iems";
             tabPage3.UseVisualStyleBackColor = true;
             // 
-            // dataGridView1
+            // dgv_LootedItems
             // 
-            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new Point(3, 3);
-            dataGridView1.Name = "dataGridView1";
-            dataGridView1.Size = new Size(340, 502);
-            dataGridView1.TabIndex = 0;
+            dgv_LootedItems.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dgv_LootedItems.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgv_LootedItems.Columns.AddRange(new DataGridViewColumn[] { Time, Player, Item });
+            dgv_LootedItems.Location = new Point(3, 3);
+            dgv_LootedItems.Name = "dgv_LootedItems";
+            dgv_LootedItems.Size = new Size(340, 502);
+            dgv_LootedItems.TabIndex = 0;
+            // 
+            // Time
+            // 
+            Time.HeaderText = "Time";
+            Time.Name = "Time";
+            Time.Width = 58;
+            // 
+            // Player
+            // 
+            Player.HeaderText = "Player";
+            Player.Name = "Player";
+            Player.Width = 64;
+            // 
+            // Item
+            // 
+            Item.HeaderText = "Item";
+            Item.Name = "Item";
+            Item.Width = 56;
             // 
             // btn_LogMonitor
             // 
@@ -198,7 +221,7 @@
             tabPage1.ResumeLayout(false);
             tabPage2.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgv_LootedItems).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -218,6 +241,9 @@
         private TextBox txtbx_LogFile;
         private Button btn_LocateLog;
         private TabPage tabPage3;
-        private DataGridView dataGridView1;
+        private DataGridView dgv_LootedItems;
+        private DataGridViewTextBoxColumn Time;
+        private DataGridViewTextBoxColumn Player;
+        private DataGridViewTextBoxColumn Item;
     }
 }
