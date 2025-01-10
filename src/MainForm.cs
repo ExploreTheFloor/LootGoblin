@@ -181,7 +181,8 @@ namespace LootGoblin
                 var playerName = trimmedDateTime.Split(" ")[0];
                 var lootedItem = trimmedDateTime[playerName.Length..].Trim();
                 UpdateLootedItems(playerName, lootedItem);
-            }catch{}
+            }
+            catch { }
         }
 
         public void UpdateLootedItems(string playerName, string lootedItem)
@@ -317,6 +318,11 @@ namespace LootGoblin
         private void btn_ClearLootRolls_Click(object sender, EventArgs e)
         {
             trv_LootRolls.Nodes.Clear();
+        }
+
+        private void btn_ClearLootedItems_Click(object sender, EventArgs e)
+        {
+            dgv_LootedItems.Rows.Clear();
         }
     }
 }

@@ -46,6 +46,7 @@
             txtbx_BidChannel = new TextBox();
             txtbx_LogFile = new TextBox();
             btn_LocateLog = new Button();
+            btn_ClearLootedItems = new Button();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
@@ -100,7 +101,7 @@
             tabPage2.Location = new Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(343, 508);
+            tabPage2.Size = new Size(343, 471);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Player Rolls";
             tabPage2.UseVisualStyleBackColor = true;
@@ -124,6 +125,7 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(btn_ClearLootedItems);
             tabPage3.Controls.Add(dgv_LootedItems);
             tabPage3.Location = new Point(4, 24);
             tabPage3.Name = "tabPage3";
@@ -139,7 +141,7 @@
             dgv_LootedItems.Columns.AddRange(new DataGridViewColumn[] { Time, Player, Item });
             dgv_LootedItems.Location = new Point(3, 3);
             dgv_LootedItems.Name = "dgv_LootedItems";
-            dgv_LootedItems.Size = new Size(340, 502);
+            dgv_LootedItems.Size = new Size(340, 473);
             dgv_LootedItems.TabIndex = 0;
             // 
             // Time
@@ -203,6 +205,16 @@
             btn_LocateLog.UseVisualStyleBackColor = true;
             btn_LocateLog.Click += btn_LocateLog_Click;
             // 
+            // btn_ClearLootedItems
+            // 
+            btn_ClearLootedItems.Location = new Point(6, 482);
+            btn_ClearLootedItems.Name = "btn_ClearLootedItems";
+            btn_ClearLootedItems.Size = new Size(331, 23);
+            btn_ClearLootedItems.TabIndex = 1;
+            btn_ClearLootedItems.Text = "Clear Looted Items";
+            btn_ClearLootedItems.UseVisualStyleBackColor = true;
+            btn_ClearLootedItems.Click += btn_ClearLootedItems_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -245,5 +257,6 @@
         private DataGridViewTextBoxColumn Time;
         private DataGridViewTextBoxColumn Player;
         private DataGridViewTextBoxColumn Item;
+        private Button btn_ClearLootedItems;
     }
 }
