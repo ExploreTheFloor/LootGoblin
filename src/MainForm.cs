@@ -180,6 +180,8 @@ namespace LootGoblin
                 var trimmedDateTime = messageToProcess.Replace("--", "")[26..].Replace("has looted a ", "").RemoveLastCharacter().Trim();
                 var playerName = trimmedDateTime.Split(" ")[0];
                 var lootedItem = trimmedDateTime[playerName.Length..].Trim();
+                if (string.IsNullOrEmpty(playerName) || string.IsNullOrEmpty(lootedItem))
+                    return;
                 UpdateLootedItems(playerName, lootedItem);
             }
             catch { }
