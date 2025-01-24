@@ -147,9 +147,9 @@
             label3.AutoSize = true;
             label3.Location = new Point(9, 62);
             label3.Name = "label3";
-            label3.Size = new Size(57, 15);
+            label3.Size = new Size(68, 15);
             label3.TabIndex = 13;
-            label3.Text = "Password";
+            label3.Text = "PASSWORD";
             // 
             // txtbx_Password
             // 
@@ -164,9 +164,9 @@
             label1.AutoSize = true;
             label1.Location = new Point(9, 33);
             label1.Name = "label1";
-            label1.Size = new Size(60, 15);
+            label1.Size = new Size(68, 15);
             label1.TabIndex = 11;
-            label1.Text = "Username";
+            label1.Text = "USERNAME";
             // 
             // txtbx_Username
             // 
@@ -203,7 +203,7 @@
             btn_SaveSettings.Name = "btn_SaveSettings";
             btn_SaveSettings.Size = new Size(308, 23);
             btn_SaveSettings.TabIndex = 14;
-            btn_SaveSettings.Text = "Save Settings";
+            btn_SaveSettings.Text = "Save Settings and Close";
             btn_SaveSettings.UseVisualStyleBackColor = true;
             btn_SaveSettings.Click += btn_SaveSettings_Click;
             // 

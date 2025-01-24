@@ -25,31 +25,31 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("USERNAME")]
         public string Username {
             get {
-                return ((string)(this["Usernam"]));
+                return ((string)(this["USERNAME"]));
             }
             set {
-                this["Usernam"] = value;
+                this["USERNAME"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("PASSWORD")]
         public string Password {
             get {
-                return ((string)(this["Password"]));
+                return ((string)(this["PASSWORD"]));
             }
             set {
-                this["Password"] = value;
+                this["PASSWORD"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Savage")]
         public string Client {
             get {
                 return ((string)(this["Client"]));
@@ -61,7 +61,7 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("api.opendkp.com")]
         public string Host {
             get {
                 return ((string)(this["Host"]));
@@ -73,7 +73,7 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("SavageBids")]
         public string BidChannel {
             get {
                 return ((string)(this["BidChannel"]));
@@ -85,7 +85,7 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("c:\\")]
         public string LogLocation {
             get {
                 return ((string)(this["LogLocation"]));

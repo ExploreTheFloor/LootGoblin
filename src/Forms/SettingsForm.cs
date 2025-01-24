@@ -4,13 +4,13 @@
     {
         public SettingsForm()
         {
+            InitializeComponent();
             txtbx_BidChannel.Text = LootGoblin.Default.BidChannel;
             txtbx_Client.Text = LootGoblin.Default.Client;
             txtbx_Host.Text = LootGoblin.Default.Host;
             txtbx_LogFile.Text = LootGoblin.Default.LogLocation;
             txtbx_Password.Text = LootGoblin.Default.Password;
             txtbx_Username.Text = LootGoblin.Default.Username;
-            InitializeComponent();
         }
 
         private void btn_SaveSettings_Click(object sender, EventArgs e)
@@ -21,6 +21,8 @@
             LootGoblin.Default.LogLocation = txtbx_LogFile.Text;
             LootGoblin.Default.Password = txtbx_Password.Text;
             LootGoblin.Default.Username = txtbx_Username.Text;
+            LootGoblin.Default.Save();
+            this.Close();
         }
 
         private void btn_LocateLog_Click(object sender, EventArgs e)

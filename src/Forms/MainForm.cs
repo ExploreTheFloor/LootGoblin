@@ -1,12 +1,15 @@
 using LootGoblin.Services;
 using System.Collections;
 using System.Data;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using LootGoblin.Forms;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 using String = System.String;
+using LootGoblin.Structure;
 
 namespace LootGoblin
 {
@@ -18,6 +21,7 @@ namespace LootGoblin
         }
 
         private LogMonitor? _logMonitor = null;
+        private SettingsForm _settingsForm = new SettingsForm();
         public event EventHandler<string> MessageToProcess;
 
         private void ParseDkpBids(string messageToProcess)
@@ -57,10 +61,11 @@ namespace LootGoblin
             if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(bidAmount) || !Char.IsDigit(bidAmount.Last()) ||
                 string.IsNullOrEmpty(biddersName) || string.IsNullOrEmpty(bidType))
                 return;
-            UpdateDkpBid(itemName, biddersName, bidAmount, bidType);
+            Task.Run(async ()=> await UpdateDkpBid(itemName, biddersName, bidAmount, bidType));
         }
 
-        private void UpdateDkpBid(string itemName, string biddersName, string bidAmount, string bidType)
+        private Dictionary<string, List<CharacterItems>> CharactersAndItems = new Dictionary<string, List<CharacterItems>>();
+        private async Task UpdateDkpBid(string itemName, string biddersName, string bidAmount, string bidType)
         {
             if (trv_DkpBids.InvokeRequired)
             {
@@ -95,6 +100,27 @@ namespace LootGoblin
             else
             {
                 trv_DkpBids.Nodes.Add(itemName).Nodes.Add(newTreeNodeText);
+                var openDkp = new OpenDkp();
+                var characters = await openDkp.GetCharacters();
+                var foundCharacter = characters.FirstOrDefault(x => x.Name == biddersName);
+
+                var linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
+                var foundParent =
+                    linkedCharacters.LinkedCharacters.FirstOrDefault(x => x.ParentId != foundCharacter.CharacterId);
+                if (foundParent != null)
+                {
+                    foundCharacter = characters.FirstOrDefault(x => x.CharacterId == foundParent.ParentId);
+                    linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
+                }
+
+                var characterItems = await openDkp.GetCharacterItems(foundCharacter.CharacterId);
+                CharactersAndItems.Add(foundCharacter.Name, characterItems);
+
+                foreach (var linkedCharacter in linkedCharacters.LinkedCharacters)
+                {
+                    characterItems = await openDkp.GetCharacterItems(linkedCharacter.ChildId);
+                    CharactersAndItems.Add(linkedCharacter.ChildName, characterItems);
+                }
             }
             trv_DkpBids.Sort();
             trv_DkpBids.EndUpdate();
@@ -130,6 +156,59 @@ namespace LootGoblin
             }
         }
 
+        public async Task UpdateCharacterList(string playerName)
+        {
+            try
+            {
+                if (trv_CharacterList.InvokeRequired)
+                {
+                    trv_CharacterList.BeginInvoke(new Action(delegate { UpdateCharacterList(playerName); }));
+                    return;
+                }
+
+                trv_CharacterList.Nodes.Clear();
+                var openDkp = new OpenDkp();
+                var characters = await openDkp.GetCharacters();
+                var foundCharacter = characters.FirstOrDefault(x => x.Name == playerName);
+
+                var linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
+                var foundParent =
+                    linkedCharacters.LinkedCharacters.FirstOrDefault(x => x.ParentId != foundCharacter.CharacterId);
+                if (foundParent != null)
+                {
+                    foundCharacter = characters.FirstOrDefault(x => x.CharacterId == foundParent.ParentId);
+                    linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
+                }
+
+                trv_CharacterList.BeginUpdate();
+                var parentCharacter = new TreeNode($"{foundCharacter.Name} | {foundCharacter.Class}");
+                var characterItems = await openDkp.GetCharacterItems(foundCharacter.CharacterId);
+                foreach (var characterItem in characterItems)
+                {
+                    parentCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
+                }
+
+                foreach (var linkedCharacter in linkedCharacters.LinkedCharacters)
+                {
+                    var childCharacter = new TreeNode($"{linkedCharacter.ChildName} | {linkedCharacter.ChildClass}");
+                    characterItems = await openDkp.GetCharacterItems(linkedCharacter.ChildId);
+                    foreach (var characterItem in characterItems)
+                    {
+                        childCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
+                    }
+
+                    trv_CharacterList.Nodes.Add(childCharacter);
+                }
+
+                trv_CharacterList.Nodes.Add(parentCharacter);
+
+                trv_CharacterList.EndUpdate();
+                trv_CharacterList.Sort();
+
+            }
+            catch { }
+        }
+
         public void UpdateLootRolls(string rollRange, string playerName, string playerRoll)
         {
             if (trv_LootRolls.InvokeRequired)
@@ -139,6 +218,7 @@ namespace LootGoblin
                     UpdateLootRolls(rollRange, playerName, playerRoll);
                 }));
                 return;
+
             }
             trv_LootRolls.BeginUpdate();
             var newTreeNodeText = $"{playerRoll} | {playerName}";
@@ -221,9 +301,9 @@ namespace LootGoblin
         private bool _isMonitoringLog = false;
         private void btn_LogMonitor_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(txtbx_LogFile.Text))
+            if (string.IsNullOrEmpty(LootGoblin.Default.LogLocation))
                 return;
-            _logMonitor ??= new LogMonitor(txtbx_LogFile.Text);
+            _logMonitor ??= new LogMonitor(LootGoblin.Default.LogLocation);
             if (!_isMonitoringLog)
             {
                 _isMonitoringLog = true;
@@ -300,23 +380,6 @@ namespace LootGoblin
             trv_DkpBids.Nodes.Clear();
         }
 
-        private void btn_LocateLog_Click(object sender, EventArgs e)
-        {
-            OpenFileDialog openFileDialog1 = new OpenFileDialog();
-
-            openFileDialog1.InitialDirectory = "c:\\";
-            openFileDialog1.Filter = "EQ Log files (eqlog*.txt)|eqlog*.txt";
-            openFileDialog1.FilterIndex = 0;
-            openFileDialog1.RestoreDirectory = true;
-
-            if (openFileDialog1.ShowDialog() != DialogResult.OK)
-            {
-                return;
-            }
-
-            txtbx_LogFile.Text = openFileDialog1.FileName;
-        }
-
         private void btn_ClearLootRolls_Click(object sender, EventArgs e)
         {
             trv_LootRolls.Nodes.Clear();
@@ -325,6 +388,53 @@ namespace LootGoblin
         private void btn_ClearLootedItems_Click(object sender, EventArgs e)
         {
             dgv_LootedItems.Rows.Clear();
+        }
+
+        private bool isSettingsFormShown = false;
+        private void btn_OpenSettings_Click(object sender, EventArgs e)
+        {
+            if (!isSettingsFormShown)
+            {
+                isSettingsFormShown = true;
+                _settingsForm.Show();
+                btn_OpenSettings.Text = "Close Settings";
+            }
+            else
+            {
+                isSettingsFormShown = false;
+                _settingsForm.Hide();
+                btn_OpenSettings.Text = "Open Settings";
+            }
+        }
+
+        private void btn_Test_Click(object sender, EventArgs e)
+        {
+            test();
+            return;
+            var openDkp = new OpenDkp();
+            try
+            {
+                var authenticationResult = openDkp.GetCharacters();
+                var test = authenticationResult.Result;
+                var test2 = openDkp.GetDkpInformationList().Result;
+                var test3 = openDkp.GetLinkedCharacters(test2.Models.FirstOrDefault().CharacterId).Result;
+
+            }
+            catch (Exception exception)
+            {
+                Debug.WriteLine(exception);
+                throw;
+            }
+        }
+
+        private void trv_DkpBids_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            try
+            {
+                var playerName = e.Node.Text.Split(" | ")[1];
+                Task.Run(async () => await UpdateCharacterList(playerName));
+            }
+            catch { }
         }
     }
 }

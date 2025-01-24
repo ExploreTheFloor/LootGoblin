@@ -2,23 +2,23 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="LootGoblin" GeneratedClassName="LootGoblin">
   <Profiles />
   <Settings>
-    <Setting Name="Usernam" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="Username" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Username</Value>
     </Setting>
     <Setting Name="Password" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">Password</Value>
     </Setting>
     <Setting Name="Client" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">Savage</Value>
     </Setting>
     <Setting Name="Host" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">api.opendkp.com</Value>
     </Setting>
     <Setting Name="BidChannel" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">SavageBids</Value>
     </Setting>
     <Setting Name="LogLocation" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">c:\</Value>
     </Setting>
   </Settings>
 </SettingsFile>
