@@ -18,11 +18,14 @@ namespace LootGoblin
         public MainForm()
         {
             InitializeComponent();
+            var openDkp = new OpenDkp();
+            _characters = openDkp.GetCharacters().Result;
         }
 
         private LogMonitor? _logMonitor = null;
-        private SettingsForm _settingsForm = new SettingsForm();
+        private readonly SettingsForm _settingsForm = new SettingsForm();
         public event EventHandler<string> MessageToProcess;
+        private readonly List<Character>? _characters = new List<Character>();
 
         private void ParseDkpBids(string messageToProcess)
         {
@@ -64,9 +67,13 @@ namespace LootGoblin
             Task.Run(async ()=> await UpdateDkpBid(itemName, biddersName, bidAmount, bidType));
         }
 
-        private Dictionary<string, List<CharacterItems>> CharactersAndItems = new Dictionary<string, List<CharacterItems>>();
+        private readonly List<DkpBidder> _charactersAndItems = new List<DkpBidder>();
+
         private async Task UpdateDkpBid(string itemName, string biddersName, string bidAmount, string bidType)
         {
+            if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(biddersName) ||
+                string.IsNullOrEmpty(bidAmount) || string.IsNullOrEmpty(bidType))
+                return;
             if (trv_DkpBids.InvokeRequired)
             {
                 trv_DkpBids.BeginInvoke(new Action(delegate
@@ -75,8 +82,14 @@ namespace LootGoblin
                 }));
                 return;
             }
+
+            await Task.Run(async ()=> await AddBidderToCharacterItemList(biddersName));
+
             trv_DkpBids.BeginUpdate();
             var newTreeNodeText = $"{bidAmount} | {biddersName} | {bidType}";
+            var foundCharacter = _charactersAndItems.FirstOrDefault(x => x.Character.Name == biddersName);
+            var alreadyWon = _charactersAndItems.Any(x =>
+                x.Character.Name == biddersName && x.CharacterItems.Any(x => x.ItemName == itemName));
             var foundItemName = Collect(trv_DkpBids.Nodes).FirstOrDefault(x => x.Text == itemName);
             if (foundItemName != null)
             {
@@ -90,6 +103,8 @@ namespace LootGoblin
                         return;
                     }
 
+                    if (alreadyWon)
+                        foundBidderName.ForeColor = Color.Red;
                     foundBidderName.Text = newTreeNodeText;
                 }
                 else
@@ -99,31 +114,69 @@ namespace LootGoblin
             }
             else
             {
-                trv_DkpBids.Nodes.Add(itemName).Nodes.Add(newTreeNodeText);
-                var openDkp = new OpenDkp();
-                var characters = await openDkp.GetCharacters();
-                var foundCharacter = characters.FirstOrDefault(x => x.Name == biddersName);
+                TreeNode item = new TreeNode(itemName);
+                TreeNode bidderNode = new TreeNode(newTreeNodeText);
 
-                var linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
-                var foundParent =
-                    linkedCharacters.LinkedCharacters.FirstOrDefault(x => x.ParentId != foundCharacter.CharacterId);
-                if (foundParent != null)
-                {
-                    foundCharacter = characters.FirstOrDefault(x => x.CharacterId == foundParent.ParentId);
-                    linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
-                }
-
-                var characterItems = await openDkp.GetCharacterItems(foundCharacter.CharacterId);
-                CharactersAndItems.Add(foundCharacter.Name, characterItems);
-
-                foreach (var linkedCharacter in linkedCharacters.LinkedCharacters)
-                {
-                    characterItems = await openDkp.GetCharacterItems(linkedCharacter.ChildId);
-                    CharactersAndItems.Add(linkedCharacter.ChildName, characterItems);
-                }
+                if (alreadyWon)
+                    bidderNode.ForeColor = Color.Red;
+                item.Nodes.Add(bidderNode);
+                trv_DkpBids.Nodes.Add(item);
             }
+
             trv_DkpBids.Sort();
             trv_DkpBids.EndUpdate();
+        }
+
+        private async Task AddBidderToCharacterItemList(string biddersName)
+        {
+
+            if (_charactersAndItems.All(x => x.Character.Name != biddersName))
+            {
+                var openDkp = new OpenDkp();
+                if (_characters != null)
+                {
+                    var foundCharacter = _characters.FirstOrDefault(x => x.Name == biddersName);
+
+                    if (foundCharacter != null)
+                    {
+                        var linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
+                        var foundParent =
+                            linkedCharacters?.LinkedCharacters.FirstOrDefault(x =>
+                                x.ParentId != foundCharacter.CharacterId);
+                        if (foundParent != null)
+                        {
+                            foundCharacter = _characters.FirstOrDefault(x => x.CharacterId == foundParent.ParentId);
+                            if (foundCharacter != null)
+                                linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
+                        }
+
+                        if (foundCharacter != null)
+                        {
+                            if (_charactersAndItems.All(x => x.Character.Name != foundCharacter.Name))
+                            {
+                                var characterItems = await openDkp.GetCharacterItems(foundCharacter.CharacterId);
+                                _charactersAndItems.Add(new DkpBidder(foundCharacter, foundCharacter.CharacterId,
+                                    characterItems));
+                            }
+                        }
+
+                        if (linkedCharacters?.LinkedCharacters != null)
+                        {
+                            foreach (var linkedCharacter in linkedCharacters.LinkedCharacters.Where(linkedCharacter =>
+                                         _charactersAndItems.All(x => x.Character.Name != linkedCharacter.ChildName)))
+                            {
+                                foundCharacter = _characters.FirstOrDefault(x => x.Name == linkedCharacter.ChildName);
+                                var characterItems = await openDkp.GetCharacterItems(linkedCharacter.ChildId);
+                                if (foundCharacter != null)
+                                {
+                                    _charactersAndItems.Add(new DkpBidder(foundCharacter, linkedCharacter.ParentId,
+                                        characterItems));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private string _currentRandomLootPlayerName = "";
@@ -167,46 +220,57 @@ namespace LootGoblin
                 }
 
                 trv_CharacterList.Nodes.Clear();
-                var openDkp = new OpenDkp();
-                var characters = await openDkp.GetCharacters();
-                var foundCharacter = characters.FirstOrDefault(x => x.Name == playerName);
+                var foundCharacter = _charactersAndItems.FirstOrDefault(x => x.Character.Name == playerName);
 
-                var linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
-                var foundParent =
-                    linkedCharacters.LinkedCharacters.FirstOrDefault(x => x.ParentId != foundCharacter.CharacterId);
-                if (foundParent != null)
+                if (foundCharacter != null)
                 {
-                    foundCharacter = characters.FirstOrDefault(x => x.CharacterId == foundParent.ParentId);
-                    linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
-                }
-
-                trv_CharacterList.BeginUpdate();
-                var parentCharacter = new TreeNode($"{foundCharacter.Name} | {foundCharacter.Class}");
-                var characterItems = await openDkp.GetCharacterItems(foundCharacter.CharacterId);
-                foreach (var characterItem in characterItems)
-                {
-                    parentCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
-                }
-
-                foreach (var linkedCharacter in linkedCharacters.LinkedCharacters)
-                {
-                    var childCharacter = new TreeNode($"{linkedCharacter.ChildName} | {linkedCharacter.ChildClass}");
-                    characterItems = await openDkp.GetCharacterItems(linkedCharacter.ChildId);
-                    foreach (var characterItem in characterItems)
+                    DkpBidder parentBidder = foundCharacter;
+                    if (foundCharacter.ParentId != foundCharacter.Character.CharacterId)
                     {
-                        childCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
+                        parentBidder =
+                            _charactersAndItems.FirstOrDefault(x => x.Character.CharacterId == foundCharacter.ParentId);
                     }
 
-                    trv_CharacterList.Nodes.Add(childCharacter);
+                    var linkedCharacters = _charactersAndItems.Where(x =>
+                        x.ParentId == foundCharacter.ParentId && x.Character.CharacterId != foundCharacter.ParentId).Distinct();
+
+                    trv_CharacterList.BeginUpdate();
+                    var parentCharacter =
+                        new TreeNode($"{parentBidder.Character.Name} | {parentBidder.Character.Class}");
+
+                    foreach (var characterItem in parentBidder.CharacterItems)
+                    {
+                        parentCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
+                    }
+
+                    foreach (var linkedCharacter in linkedCharacters)
+                    {
+                        var childCharacter =
+                            new TreeNode($"{linkedCharacter.Character.Name} | {linkedCharacter.Character.Class}");
+                        foreach (var characterItem in linkedCharacter.CharacterItems)
+                        {
+                            childCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
+                        }
+
+                        trv_CharacterList.Nodes.Add(childCharacter);
+                    }
+
+                    trv_CharacterList.Nodes.Add(parentCharacter);
+
+                    trv_CharacterList.EndUpdate();
+                    trv_CharacterList.Sort();
+
                 }
-
-                trv_CharacterList.Nodes.Add(parentCharacter);
-
-                trv_CharacterList.EndUpdate();
-                trv_CharacterList.Sort();
-
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Debug.Write(ex);
+            }
+        }
+
+        public async Task UpdateCharacterDkp(string playerName)
+        {
+
         }
 
         public void UpdateLootRolls(string rollRange, string playerName, string playerRoll)
@@ -324,16 +388,13 @@ namespace LootGoblin
                 _logMonitor.MessageReceived += ParseLootedItems;
             }
         }
-        private void test()
+        private void Test()
         {
             var rand = new Random();
             ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(10, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(100, 300)} alt'");
-            ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Destruction tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Zumbuser tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Xumbuser tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:58:55 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:58:58 2024] Splodies's eyes glow violet.");
             ParseDkpBids($"[Mon Nov 25 21:58:59 2024] Cyrano tells the raid,  'Crown of Rile {rand.Next(100, 300)}'");
@@ -390,18 +451,18 @@ namespace LootGoblin
             dgv_LootedItems.Rows.Clear();
         }
 
-        private bool isSettingsFormShown = false;
+        private bool _isSettingsFormShown = false;
         private void btn_OpenSettings_Click(object sender, EventArgs e)
         {
-            if (!isSettingsFormShown)
+            if (!_isSettingsFormShown)
             {
-                isSettingsFormShown = true;
+                _isSettingsFormShown = true;
                 _settingsForm.Show();
                 btn_OpenSettings.Text = "Close Settings";
             }
             else
             {
-                isSettingsFormShown = false;
+                _isSettingsFormShown = false;
                 _settingsForm.Hide();
                 btn_OpenSettings.Text = "Open Settings";
             }
@@ -409,7 +470,7 @@ namespace LootGoblin
 
         private void btn_Test_Click(object sender, EventArgs e)
         {
-            test();
+            Test();
             return;
             var openDkp = new OpenDkp();
             try
