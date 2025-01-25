@@ -124,6 +124,7 @@
             trv_DkpBids.HideSelection = false;
             trv_DkpBids.Location = new Point(6, 6);
             trv_DkpBids.Name = "trv_DkpBids";
+            trv_DkpBids.ShowNodeToolTips = true;
             trv_DkpBids.Size = new Size(216, 469);
             trv_DkpBids.TabIndex = 0;
             trv_DkpBids.NodeMouseClick += trv_DkpBids_NodeMouseClick;

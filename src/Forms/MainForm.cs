@@ -83,14 +83,29 @@ namespace LootGoblin
                 return;
             }
 
-            await Task.Run(async ()=> await AddBidderToCharacterItemList(biddersName));
+            //await Task.Run(async () => await AddBidderToCharacterItemList(biddersName));
+            await AddBidderToCharacterItemList(biddersName);
 
             trv_DkpBids.BeginUpdate();
-            var newTreeNodeText = $"{bidAmount} | {biddersName} | {bidType}";
             var foundCharacter = _charactersAndItems.FirstOrDefault(x => x.Character.Name == biddersName);
-            var alreadyWon = _charactersAndItems.Any(x =>
-                x.Character.Name == biddersName && x.CharacterItems.Any(x => x.ItemName == itemName));
+            
+            var foundDuplicateItems = _charactersAndItems
+                .Where(x => x.ParentId == foundCharacter?.ParentId && x.CharacterItems.Any(x => x.ItemName == itemName))
+                .Select(y => new
+                { Name = y.Character.Name, Date = y.CharacterItems.FirstOrDefault(z => z.ItemName == itemName)?.Date.ToShortDateString() }).Distinct().ToList();
+
             var foundItemName = Collect(trv_DkpBids.Nodes).FirstOrDefault(x => x.Text == itemName);
+            TreeNode newTreeNodeText = new TreeNode($"{bidAmount} | {biddersName} | {bidType}");
+            
+            if (foundDuplicateItems.Any())
+            {
+                newTreeNodeText.ForeColor = Color.Red;
+                foreach (var foundDuplicateItem in foundDuplicateItems)
+                {
+                    newTreeNodeText.ToolTipText += $"{foundDuplicateItem.Name} | {foundDuplicateItem.Date}\n";
+                }
+            }
+            
             if (foundItemName != null)
             {
                 var foundBidderName = Collect(foundItemName.Nodes).FirstOrDefault(x => x.Text.Contains(biddersName));
@@ -103,9 +118,7 @@ namespace LootGoblin
                         return;
                     }
 
-                    if (alreadyWon)
-                        foundBidderName.ForeColor = Color.Red;
-                    foundBidderName.Text = newTreeNodeText;
+                    foundBidderName = newTreeNodeText;
                 }
                 else
                 {
@@ -115,11 +128,7 @@ namespace LootGoblin
             else
             {
                 TreeNode item = new TreeNode(itemName);
-                TreeNode bidderNode = new TreeNode(newTreeNodeText);
-
-                if (alreadyWon)
-                    bidderNode.ForeColor = Color.Red;
-                item.Nodes.Add(bidderNode);
+                item.Nodes.Add(newTreeNodeText);
                 trv_DkpBids.Nodes.Add(item);
             }
 
@@ -152,7 +161,7 @@ namespace LootGoblin
 
                         if (foundCharacter != null)
                         {
-                            if (_charactersAndItems.All(x => x.Character.Name != foundCharacter.Name))
+                            if (_charactersAndItems.All(x => x.Character.CharacterId != foundCharacter.CharacterId))
                             {
                                 var characterItems = await openDkp.GetCharacterItems(foundCharacter.CharacterId);
                                 _charactersAndItems.Add(new DkpBidder(foundCharacter, foundCharacter.CharacterId,
@@ -163,14 +172,16 @@ namespace LootGoblin
                         if (linkedCharacters?.LinkedCharacters != null)
                         {
                             foreach (var linkedCharacter in linkedCharacters.LinkedCharacters.Where(linkedCharacter =>
-                                         _charactersAndItems.All(x => x.Character.Name != linkedCharacter.ChildName)))
+                                         _charactersAndItems.All(x => x.Character.CharacterId != linkedCharacter.ChildId)))
                             {
-                                foundCharacter = _characters.FirstOrDefault(x => x.Name == linkedCharacter.ChildName);
+                                foundCharacter = _characters.FirstOrDefault(x => x.CharacterId == linkedCharacter.ChildId);
                                 var characterItems = await openDkp.GetCharacterItems(linkedCharacter.ChildId);
                                 if (foundCharacter != null)
                                 {
-                                    _charactersAndItems.Add(new DkpBidder(foundCharacter, linkedCharacter.ParentId,
-                                        characterItems));
+                                    if (_charactersAndItems.All(x => x.Character.CharacterId != foundCharacter.CharacterId))
+                                    {
+                                        _charactersAndItems.Add(new DkpBidder(foundCharacter, linkedCharacter.ParentId, characterItems));
+                                    }
                                 }
                             }
                         }
@@ -231,8 +242,8 @@ namespace LootGoblin
                             _charactersAndItems.FirstOrDefault(x => x.Character.CharacterId == foundCharacter.ParentId);
                     }
 
-                    var linkedCharacters = _charactersAndItems.Where(x =>
-                        x.ParentId == foundCharacter.ParentId && x.Character.CharacterId != foundCharacter.ParentId).Distinct();
+                    var linkedCharacters = _charactersAndItems.Distinct().Where(x =>
+                        x.ParentId == foundCharacter.ParentId && x.Character.CharacterId != foundCharacter.ParentId);
 
                     trv_CharacterList.BeginUpdate();
                     var parentCharacter =
