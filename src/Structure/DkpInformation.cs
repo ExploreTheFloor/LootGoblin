@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace LootGoblin.Structure
 {
 
-    public class DkpInformationList
+    public class DKPSummary
     {
         public List<Model> Models { get; set; }
+        
         public DateTime AsOfDate { get; set; }
     }
+
     public class Model
     {
         public double CurrentDKP { get; set; }

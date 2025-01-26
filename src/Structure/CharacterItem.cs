@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace LootGoblin.Structure
 {
-    public class CharacterItems
+    public class CharacterItem
     {
         public string ItemName { get; set; }
         public int ItemID { get; set; }

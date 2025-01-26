@@ -8,7 +8,7 @@ namespace LootGoblin.Structure
 {
     public class DkpBidder
     {
-        public DkpBidder(Character character, int parentId, List<CharacterItems> characterItems)
+        public DkpBidder(Character character, int parentId, List<CharacterItem> characterItems)
         {
             Character = character;
             ParentId = parentId;
@@ -17,6 +17,7 @@ namespace LootGoblin.Structure
 
         public Character Character { get; set; }
         public int ParentId { get; set; }
-        public List<CharacterItems> CharacterItems { get; set; }
+        public int CurrentDkp { get; set; }
+        public List<CharacterItem> CharacterItems { get; set; }
     }
 }

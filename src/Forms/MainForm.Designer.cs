@@ -45,6 +45,9 @@
             Time = new DataGridViewTextBoxColumn();
             Player = new DataGridViewTextBoxColumn();
             Item = new DataGridViewTextBoxColumn();
+            tabPage4 = new TabPage();
+            btn_DuplicateLoot = new Button();
+            dgv_DuplicateLoots = new DataGridView();
             btn_LogMonitor = new Button();
             btn_OpenSettings = new Button();
             btn_Test = new Button();
@@ -53,6 +56,8 @@
             tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgv_LootedItems).BeginInit();
+            tabPage4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_DuplicateLoots).BeginInit();
             SuspendLayout();
             // 
             // tabControl1
@@ -60,6 +65,7 @@
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
             tabControl1.Controls.Add(tabPage3);
+            tabControl1.Controls.Add(tabPage4);
             tabControl1.Location = new Point(12, 12);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -207,9 +213,41 @@
             Item.Name = "Item";
             Item.Width = 56;
             // 
+            // tabPage4
+            // 
+            tabPage4.Controls.Add(btn_DuplicateLoot);
+            tabPage4.Controls.Add(dgv_DuplicateLoots);
+            tabPage4.Location = new Point(4, 24);
+            tabPage4.Name = "tabPage4";
+            tabPage4.Padding = new Padding(3);
+            tabPage4.Size = new Size(430, 508);
+            tabPage4.TabIndex = 3;
+            tabPage4.Text = "Duplicate Loot";
+            tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // btn_DuplicateLoot
+            // 
+            btn_DuplicateLoot.Location = new Point(6, 479);
+            btn_DuplicateLoot.Name = "btn_DuplicateLoot";
+            btn_DuplicateLoot.Size = new Size(418, 23);
+            btn_DuplicateLoot.TabIndex = 1;
+            btn_DuplicateLoot.Text = "Find Duplicate Loot";
+            btn_DuplicateLoot.UseVisualStyleBackColor = true;
+            btn_DuplicateLoot.Click += btn_DuplicateLoot_Click;
+            // 
+            // dgv_DuplicateLoots
+            // 
+            dgv_DuplicateLoots.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCellsExceptHeader;
+            dgv_DuplicateLoots.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
+            dgv_DuplicateLoots.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgv_DuplicateLoots.Location = new Point(6, 6);
+            dgv_DuplicateLoots.Name = "dgv_DuplicateLoots";
+            dgv_DuplicateLoots.Size = new Size(418, 470);
+            dgv_DuplicateLoots.TabIndex = 0;
+            // 
             // btn_LogMonitor
             // 
-            btn_LogMonitor.Location = new Point(189, 554);
+            btn_LogMonitor.Location = new Point(272, 554);
             btn_LogMonitor.Name = "btn_LogMonitor";
             btn_LogMonitor.Size = new Size(174, 24);
             btn_LogMonitor.TabIndex = 5;
@@ -229,7 +267,7 @@
             // 
             // btn_Test
             // 
-            btn_Test.Location = new Point(22, 588);
+            btn_Test.Location = new Point(16, 588);
             btn_Test.Name = "btn_Test";
             btn_Test.Size = new Size(174, 24);
             btn_Test.TabIndex = 8;
@@ -241,7 +279,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(462, 624);
+            ClientSize = new Size(462, 587);
             Controls.Add(btn_Test);
             Controls.Add(btn_OpenSettings);
             Controls.Add(btn_LogMonitor);
@@ -255,6 +293,8 @@
             tabPage2.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgv_LootedItems).EndInit();
+            tabPage4.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgv_DuplicateLoots).EndInit();
             ResumeLayout(false);
         }
 
@@ -279,5 +319,8 @@
         private Label label1;
         private TreeView trv_CharacterList;
         private Label lbl_CurrentDkp;
+        private TabPage tabPage4;
+        private Button btn_DuplicateLoot;
+        private DataGridView dgv_DuplicateLoots;
     }
 }

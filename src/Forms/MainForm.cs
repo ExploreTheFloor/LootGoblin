@@ -10,6 +10,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 using String = System.String;
 using LootGoblin.Structure;
+using System.ComponentModel;
 
 namespace LootGoblin
 {
@@ -19,13 +20,18 @@ namespace LootGoblin
         {
             InitializeComponent();
             var openDkp = new OpenDkp();
-            _characters = openDkp.GetCharacters().Result;
+            Task.Run(async()=> 
+            { 
+                _characters = await openDkp.GetCharacters();
+                _dkpSummary = await openDkp.GetDKPSummary();
+            });
         }
 
         private LogMonitor? _logMonitor = null;
         private readonly SettingsForm _settingsForm = new SettingsForm();
         public event EventHandler<string> MessageToProcess;
-        private readonly List<Character>? _characters = new List<Character>();
+        private List<Character>? _characters = new List<Character>();
+        private DKPSummary _dkpSummary = new DKPSummary(); 
 
         private void ParseDkpBids(string messageToProcess)
         {
@@ -64,7 +70,7 @@ namespace LootGoblin
             if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(bidAmount) || !Char.IsDigit(bidAmount.Last()) ||
                 string.IsNullOrEmpty(biddersName) || string.IsNullOrEmpty(bidType))
                 return;
-            Task.Run(async ()=> await UpdateDkpBid(itemName, biddersName, bidAmount, bidType));
+            Task.Run(async () => await UpdateDkpBid(itemName, biddersName, bidAmount, bidType));
         }
 
         private readonly List<DkpBidder> _charactersAndItems = new List<DkpBidder>();
@@ -83,12 +89,11 @@ namespace LootGoblin
                 return;
             }
 
-            //await Task.Run(async () => await AddBidderToCharacterItemList(biddersName));
             await AddBidderToCharacterItemList(biddersName);
 
             trv_DkpBids.BeginUpdate();
             var foundCharacter = _charactersAndItems.FirstOrDefault(x => x.Character.Name == biddersName);
-            
+
             var foundDuplicateItems = _charactersAndItems
                 .Where(x => x.ParentId == foundCharacter?.ParentId && x.CharacterItems.Any(x => x.ItemName == itemName))
                 .Select(y => new
@@ -96,7 +101,7 @@ namespace LootGoblin
 
             var foundItemName = Collect(trv_DkpBids.Nodes).FirstOrDefault(x => x.Text == itemName);
             TreeNode newTreeNodeText = new TreeNode($"{bidAmount} | {biddersName} | {bidType}");
-            
+
             if (foundDuplicateItems.Any())
             {
                 newTreeNodeText.ForeColor = Color.Red;
@@ -105,7 +110,7 @@ namespace LootGoblin
                     newTreeNodeText.ToolTipText += $"{foundDuplicateItem.Name} | {foundDuplicateItem.Date}\n";
                 }
             }
-            
+
             if (foundItemName != null)
             {
                 var foundBidderName = Collect(foundItemName.Nodes).FirstOrDefault(x => x.Text.Contains(biddersName));
@@ -138,16 +143,15 @@ namespace LootGoblin
 
         private async Task AddBidderToCharacterItemList(string biddersName)
         {
-
             if (_charactersAndItems.All(x => x.Character.Name != biddersName))
             {
-                var openDkp = new OpenDkp();
                 if (_characters != null)
                 {
                     var foundCharacter = _characters.FirstOrDefault(x => x.Name == biddersName);
 
                     if (foundCharacter != null)
                     {
+                        var openDkp = new OpenDkp();
                         var linkedCharacters = await openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
                         var foundParent =
                             linkedCharacters?.LinkedCharacters.FirstOrDefault(x =>
@@ -277,11 +281,6 @@ namespace LootGoblin
             {
                 Debug.Write(ex);
             }
-        }
-
-        public async Task UpdateCharacterDkp(string playerName)
-        {
-
         }
 
         public void UpdateLootRolls(string rollRange, string playerName, string playerRoll)
@@ -482,21 +481,19 @@ namespace LootGoblin
         private void btn_Test_Click(object sender, EventArgs e)
         {
             Test();
-            return;
-            var openDkp = new OpenDkp();
-            try
-            {
-                var authenticationResult = openDkp.GetCharacters();
-                var test = authenticationResult.Result;
-                var test2 = openDkp.GetDkpInformationList().Result;
-                var test3 = openDkp.GetLinkedCharacters(test2.Models.FirstOrDefault().CharacterId).Result;
 
-            }
-            catch (Exception exception)
-            {
-                Debug.WriteLine(exception);
-                throw;
-            }
+            //var openDkp = new OpenDkp();
+            //try
+            //{
+            //    var test2 = openDkp.GetDKPSummary().Result;
+                
+
+            //}
+            //catch (Exception exception)
+            //{
+            //    Debug.WriteLine(exception);
+            //    throw;
+            //}
         }
 
         private void trv_DkpBids_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -505,8 +502,46 @@ namespace LootGoblin
             {
                 var playerName = e.Node.Text.Split(" | ")[1];
                 Task.Run(async () => await UpdateCharacterList(playerName));
+                var currentDkp = _dkpSummary.Models.FirstOrDefault(x => x.CharacterName == playerName).CurrentDKP;
+                UpdateCharacterDkp(currentDkp);
+
             }
             catch { }
+        }
+        public async Task UpdateCharacterDkp(double currentDkp)
+        {
+            if (trv_LootRolls.InvokeRequired)
+            {
+                trv_LootRolls.BeginInvoke(new Action(delegate { UpdateCharacterDkp(currentDkp); }));
+                return;
+            }
+
+            lbl_CurrentDkp.Text = currentDkp.ToString();
+        }
+
+
+        private void btn_DuplicateLoot_Click(object sender, EventArgs e)
+        {
+            Task.Run(async () =>
+            {
+                var tools = new Tools();
+                var findDupes = await tools.FindDuplicateLoots();
+                var dupeLootSource = new BindingList<GridViewItemDuplicate>(findDupes.Select(x =>
+                    new GridViewItemDuplicate(x.User, x.Item.ItemName, x.Item.Date.ToShortDateString())).ToList());
+                await UpdateDupeLoot(dupeLootSource);
+            });
+
+        }
+
+        public async Task UpdateDupeLoot(BindingList<GridViewItemDuplicate> dupeLootSource)
+        {
+            if (trv_LootRolls.InvokeRequired)
+            {
+                trv_LootRolls.BeginInvoke(new Action(delegate { UpdateDupeLoot(dupeLootSource); }));
+                return;
+            }
+            dgv_DuplicateLoots.DataSource = dupeLootSource;
+            dgv_DuplicateLoots.Refresh();
         }
     }
 }

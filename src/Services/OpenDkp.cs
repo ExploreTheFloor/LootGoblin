@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Runtime.Intrinsics.Arm;
+using System.Text.Json;
 using LootGoblin.Structure;
 
 namespace LootGoblin.Services
@@ -65,13 +66,13 @@ namespace LootGoblin.Services
             return JsonSerializer.Deserialize<List<CharacterDkp>>(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<DkpInformationList?> GetDkpInformationList()
+        public async Task<DKPSummary> GetDKPSummary()
         {
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/dkp");
             var response = await client.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            return JsonSerializer.Deserialize<DkpInformationList>(await response.Content.ReadAsStringAsync());
+            return JsonSerializer.Deserialize<DKPSummary>(await response.Content.ReadAsStringAsync());
         }
 
         public async Task<CharacterLinks?> GetLinkedCharacters(int id)
@@ -84,13 +85,13 @@ namespace LootGoblin.Services
             return JsonSerializer.Deserialize<CharacterLinks>(await response.Content.ReadAsStringAsync());
         }
 
-        public async Task<List<CharacterItems>?> GetCharacterItems(int id)
+        public async Task<List<CharacterItem>?> GetCharacterItems(int id)
         {
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/characters/{id}/items");
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
-            return JsonSerializer.Deserialize<List<CharacterItems>>(await response.Content.ReadAsStringAsync());
+            return JsonSerializer.Deserialize<List<CharacterItem>>(await response.Content.ReadAsStringAsync());
         }
     }
 }
