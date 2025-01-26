@@ -255,7 +255,7 @@ namespace LootGoblin
 
                     foreach (var characterItem in parentBidder.CharacterItems)
                     {
-                        parentCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
+                        parentCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                     }
 
                     foreach (var linkedCharacter in linkedCharacters)
@@ -264,7 +264,7 @@ namespace LootGoblin
                             new TreeNode($"{linkedCharacter.Character.Name} | {linkedCharacter.Character.Class}");
                         foreach (var characterItem in linkedCharacter.CharacterItems)
                         {
-                            childCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date}"));
+                            childCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                         }
 
                         trv_CharacterList.Nodes.Add(childCharacter);
