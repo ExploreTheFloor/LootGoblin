@@ -20,8 +20,8 @@ namespace LootGoblin
         {
             InitializeComponent();
             var openDkp = new OpenDkp();
-            Task.Run(async()=> 
-            { 
+            Task.Run(async () =>
+            {
                 _characters = await openDkp.GetCharacters();
                 _dkpSummary = await openDkp.GetDKPSummary();
             });
@@ -31,7 +31,7 @@ namespace LootGoblin
         private readonly SettingsForm _settingsForm = new SettingsForm();
         public event EventHandler<string> MessageToProcess;
         private List<Character>? _characters = new List<Character>();
-        private DKPSummary _dkpSummary = new DKPSummary(); 
+        private DKPSummary _dkpSummary = new DKPSummary();
 
         private void ParseDkpBids(string messageToProcess)
         {
@@ -486,7 +486,7 @@ namespace LootGoblin
             //try
             //{
             //    var test2 = openDkp.GetDKPSummary().Result;
-                
+
 
             //}
             //catch (Exception exception)
@@ -542,6 +542,11 @@ namespace LootGoblin
             }
             dgv_DuplicateLoots.DataSource = dupeLootSource;
             dgv_DuplicateLoots.Refresh();
+        }
+
+        private void panel3_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }

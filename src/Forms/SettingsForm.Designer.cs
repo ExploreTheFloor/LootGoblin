@@ -109,9 +109,9 @@
             // 
             // txtbx_Host
             // 
-            txtbx_Host.Location = new Point(75, 117);
+            txtbx_Host.Location = new Point(83, 117);
             txtbx_Host.Name = "txtbx_Host";
-            txtbx_Host.Size = new Size(224, 23);
+            txtbx_Host.Size = new Size(216, 23);
             txtbx_Host.TabIndex = 17;
             txtbx_Host.Text = "api.opendkp.com";
             // 
@@ -126,9 +126,9 @@
             // 
             // txtbx_Client
             // 
-            txtbx_Client.Location = new Point(75, 88);
+            txtbx_Client.Location = new Point(83, 88);
             txtbx_Client.Name = "txtbx_Client";
-            txtbx_Client.Size = new Size(224, 23);
+            txtbx_Client.Size = new Size(216, 23);
             txtbx_Client.TabIndex = 15;
             txtbx_Client.Text = "Savage";
             // 
@@ -147,16 +147,16 @@
             label3.AutoSize = true;
             label3.Location = new Point(9, 62);
             label3.Name = "label3";
-            label3.Size = new Size(68, 15);
+            label3.Size = new Size(57, 15);
             label3.TabIndex = 13;
-            label3.Text = "PASSWORD";
+            label3.Text = "Password";
             // 
             // txtbx_Password
             // 
-            txtbx_Password.Location = new Point(75, 59);
+            txtbx_Password.Location = new Point(83, 59);
             txtbx_Password.Name = "txtbx_Password";
             txtbx_Password.PasswordChar = '*';
-            txtbx_Password.Size = new Size(224, 23);
+            txtbx_Password.Size = new Size(216, 23);
             txtbx_Password.TabIndex = 12;
             // 
             // label1
@@ -164,15 +164,15 @@
             label1.AutoSize = true;
             label1.Location = new Point(9, 33);
             label1.Name = "label1";
-            label1.Size = new Size(68, 15);
+            label1.Size = new Size(60, 15);
             label1.TabIndex = 11;
-            label1.Text = "USERNAME";
+            label1.Text = "Username";
             // 
             // txtbx_Username
             // 
-            txtbx_Username.Location = new Point(75, 30);
+            txtbx_Username.Location = new Point(83, 30);
             txtbx_Username.Name = "txtbx_Username";
-            txtbx_Username.Size = new Size(224, 23);
+            txtbx_Username.Size = new Size(216, 23);
             txtbx_Username.TabIndex = 10;
             // 
             // panel2
