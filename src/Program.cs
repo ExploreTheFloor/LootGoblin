@@ -1,3 +1,5 @@
+using LootGoblin.Forms;
+
 namespace LootGoblin
 {
     internal static class Program

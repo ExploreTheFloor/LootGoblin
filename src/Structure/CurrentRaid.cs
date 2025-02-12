@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace LootGoblin.Structure
 {
-    public class RaidInsert// Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
+    public class CurrentRaid// Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
     {
         [JsonProperty("Items")]
         public List<Item> Items { get; set; }
@@ -19,7 +19,7 @@ namespace LootGoblin.Structure
         public string Name { get; set; }
 
         [JsonProperty("Timestamp")]
-        public DateTime Timestamp { get; set; }
+        public string Timestamp { get; set; }
 
         [JsonProperty("Pool")]
         public Pool Pool { get; set; }

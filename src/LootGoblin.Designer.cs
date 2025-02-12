@@ -25,31 +25,7 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("USERNAME")]
-        public string Username {
-            get {
-                return ((string)(this["USERNAME"]));
-            }
-            set {
-                this["USERNAME"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("PASSWORD")]
-        public string Password {
-            get {
-                return ((string)(this["PASSWORD"]));
-            }
-            set {
-                this["PASSWORD"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Savage")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string Client {
             get {
                 return ((string)(this["Client"]));
@@ -61,7 +37,7 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("api.opendkp.com")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string Host {
             get {
                 return ((string)(this["Host"]));
@@ -73,7 +49,7 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("SavageBids")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string BidChannel {
             get {
                 return ((string)(this["BidChannel"]));
@@ -85,13 +61,49 @@ namespace LootGoblin {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("c:\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string LogLocation {
             get {
                 return ((string)(this["LogLocation"]));
             }
             set {
                 this["LogLocation"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Username {
+            get {
+                return ((string)(this["Username"]));
+            }
+            set {
+                this["Username"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Password {
+            get {
+                return ((string)(this["Password"]));
+            }
+            set {
+                this["Password"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string CharacterName {
+            get {
+                return ((string)(this["CharacterName"]));
+            }
+            set {
+                this["CharacterName"] = value;
             }
         }
     }

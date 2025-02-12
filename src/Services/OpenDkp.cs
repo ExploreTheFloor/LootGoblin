@@ -15,12 +15,12 @@ namespace LootGoblin.Services
 
         public class Raids
         {
-            public async Task RaidInsert(RaidInsert raidInsert)
+            public async Task RaidInsert(CurrentRaid currentRaid)
             {
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Put, "https://{{host}}/clients/{{client}}/raids");
 
-                var jsonSerialized = JsonConvert.SerializeObject(raidInsert);
+                var jsonSerialized = JsonConvert.SerializeObject(currentRaid);
                 var content = new StringContent(jsonSerialized, null, "application/x-amz-json-1.1");
                 request.Content = content;
                 var response = await client.SendAsync(request);
@@ -103,9 +103,20 @@ namespace LootGoblin.Services
         {
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/characters/{id}/items");
-            var response = await client.SendAsync(request);
+            var response = await client.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             return JsonConvert.DeserializeObject<List<CharacterItem>>(await response.Content.ReadAsStringAsync());
+        }
+
+        public async Task SubmitRaid(CurrentRaid currentRaid)
+        {
+            var client = new HttpClient();
+            var request = new HttpRequestMessage(HttpMethod.Put, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/raids");
+            var jsonSerialized = JsonConvert.SerializeObject(currentRaid);
+            var content = new StringContent(jsonSerialized, null, "application/x-amz-json-1.1");
+            request.Content = content;
+            var response = await client.SendAsync(request).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
         }
     }
 }

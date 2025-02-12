@@ -43,6 +43,8 @@
             label1 = new Label();
             txtbx_Username = new TextBox();
             panel2 = new Panel();
+            txtbx_CharacterName = new TextBox();
+            label7 = new Label();
             label9 = new Label();
             btn_SaveSettings = new Button();
             panel1.SuspendLayout();
@@ -51,7 +53,7 @@
             // 
             // btn_LocateLog
             // 
-            btn_LocateLog.Location = new Point(9, 100);
+            btn_LocateLog.Location = new Point(9, 131);
             btn_LocateLog.Name = "btn_LocateLog";
             btn_LocateLog.Size = new Size(290, 23);
             btn_LocateLog.TabIndex = 11;
@@ -61,7 +63,7 @@
             // 
             // txtbx_LogFile
             // 
-            txtbx_LogFile.Location = new Point(9, 71);
+            txtbx_LogFile.Location = new Point(9, 102);
             txtbx_LogFile.Name = "txtbx_LogFile";
             txtbx_LogFile.Size = new Size(290, 23);
             txtbx_LogFile.TabIndex = 10;
@@ -69,15 +71,15 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(5, 45);
+            label2.Location = new Point(5, 76);
             label2.Name = "label2";
-            label2.Size = new Size(92, 15);
+            label2.Size = new Size(95, 15);
             label2.TabIndex = 9;
-            label2.Text = "Bdding Channel";
+            label2.Text = "Bidding Channel";
             // 
             // txtbx_BidChannel
             // 
-            txtbx_BidChannel.Location = new Point(106, 42);
+            txtbx_BidChannel.Location = new Point(106, 73);
             txtbx_BidChannel.Name = "txtbx_BidChannel";
             txtbx_BidChannel.Size = new Size(193, 23);
             txtbx_BidChannel.TabIndex = 8;
@@ -177,6 +179,8 @@
             // 
             // panel2
             // 
+            panel2.Controls.Add(txtbx_CharacterName);
+            panel2.Controls.Add(label7);
             panel2.Controls.Add(label9);
             panel2.Controls.Add(txtbx_LogFile);
             panel2.Controls.Add(btn_LocateLog);
@@ -184,8 +188,24 @@
             panel2.Controls.Add(label2);
             panel2.Location = new Point(3, 162);
             panel2.Name = "panel2";
-            panel2.Size = new Size(307, 134);
+            panel2.Size = new Size(307, 165);
             panel2.TabIndex = 13;
+            // 
+            // txtbx_CharacterName
+            // 
+            txtbx_CharacterName.Location = new Point(106, 44);
+            txtbx_CharacterName.Name = "txtbx_CharacterName";
+            txtbx_CharacterName.Size = new Size(193, 23);
+            txtbx_CharacterName.TabIndex = 15;
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(5, 47);
+            label7.Name = "label7";
+            label7.Size = new Size(93, 15);
+            label7.TabIndex = 16;
+            label7.Text = "Character Name";
             // 
             // label9
             // 
@@ -199,9 +219,9 @@
             // 
             // btn_SaveSettings
             // 
-            btn_SaveSettings.Location = new Point(3, 302);
+            btn_SaveSettings.Location = new Point(3, 333);
             btn_SaveSettings.Name = "btn_SaveSettings";
-            btn_SaveSettings.Size = new Size(308, 23);
+            btn_SaveSettings.Size = new Size(307, 23);
             btn_SaveSettings.TabIndex = 14;
             btn_SaveSettings.Text = "Save Settings and Close";
             btn_SaveSettings.UseVisualStyleBackColor = true;
@@ -211,12 +231,13 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(314, 332);
+            ClientSize = new Size(314, 359);
             Controls.Add(btn_SaveSettings);
             Controls.Add(panel2);
             Controls.Add(panel1);
             Name = "SettingsForm";
             Text = "SettingsForm";
+            FormClosed += SettingsForm_FormClosed;
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             panel2.ResumeLayout(false);
@@ -243,5 +264,7 @@
         private Panel panel2;
         private Label label9;
         private Button btn_SaveSettings;
+        private TextBox txtbx_CharacterName;
+        private Label label7;
     }
 }
