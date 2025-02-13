@@ -18,12 +18,15 @@ namespace LootGoblin.Forms
                 _characters = await _openDkp.GetCharacters();
                 _dkpSummary = await _openDkp.GetDKPSummary();
             });
-            var test = DateTime.Now.ToShortDateString();
+            dgv_LootWinners.DataSource = _dkpWinners;
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
             if (!Directory.Exists($@"{eqDir}\BackUp"))
                 Directory.CreateDirectory($@"{eqDir}\BackUp");
             if (!Directory.Exists($@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}"))
                 Directory.CreateDirectory($@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}");
+            _itemDictionary =
+                JsonConvert.DeserializeObject<Dictionary<int, string>>(
+                    File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Items.Json"));
         }
 
         private readonly OpenDkp _openDkp = new OpenDkp();
@@ -34,8 +37,10 @@ namespace LootGoblin.Forms
         private DKPSummary _dkpSummary = new DKPSummary();
         public CurrentRaid CurrentRaid = new CurrentRaid();
         private BindingList<DkpWinner> _dkpWinners = new BindingList<DkpWinner>();
+        private Dictionary<int, string>? _itemDictionary;
 
         private bool _isMonitoringLog = false;
+
         private void btn_LogMonitor_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(LootGoblin.Default.LogLocation))
@@ -69,17 +74,23 @@ namespace LootGoblin.Forms
         private void ParseAwardedLoot(string messageToProcess)
         {
             //var grats = $"Congratulations! {PlayerName} bid {bidAmount} dkp for item: {item}";
-            if (!messageToProcess.Contains("Congratulations!") || !messageToProcess.Contains("bid") || !messageToProcess.Contains("dkp for item:"))
+            if (!messageToProcess.Contains("Congratulations!") || !messageToProcess.Contains("bid") ||
+                !messageToProcess.Contains("dkp for item:"))
                 return;
             var splitWholeMessage = messageToProcess[26..].Trim().Replace("'", $"").Split(',');
             var messagePoster = splitWholeMessage[0].Trim().Split(" ")[0].Trim();
             if (messagePoster.ToLower() != "you")
-                messagePoster = LootGoblin.Default.CharacterName;
-            var splitCongratsMessage = splitWholeMessage[1].Trim().Split(":")[1];
+                return;
+            var splitCongratsMessage = splitWholeMessage[1].Trim().Split("!")[1].Trim();
             var playerName = splitCongratsMessage.Split(" ")[0].Trim();
             var bidAmount = Convert.ToInt32(splitCongratsMessage.Split(" ")[2].Trim());
-            var itemWon = splitCongratsMessage.Split("dkp for item:")[1].Trim();
+            var itemWon = messageToProcess[26..].Trim().Split(":")[1].Trim();
             Task.Run(() => Task.FromResult(UpdateAwardedLoot(new DkpWinner(playerName, bidAmount, itemWon))));
+        }
+
+        private int GetItemIdFromName(string itemName)
+        {
+            return _itemDictionary != null ? _itemDictionary.FirstOrDefault(x => x.Value == itemName).Key : 0;
         }
 
         public Task UpdateAwardedLoot(DkpWinner dkpWinner)
@@ -89,6 +100,16 @@ namespace LootGoblin.Forms
                 dgv_LootWinners.BeginInvoke(new Action(delegate { UpdateAwardedLoot(dkpWinner); }));
                 return Task.CompletedTask;
             }
+
+            CurrentRaid.Items.Add(new Item
+            {
+                CharacterName = dkpWinner.Player,
+                Dkp = dkpWinner.Bid,
+                GameItemId = GetItemIdFromName(dkpWinner.Item),
+                ItemId = GetItemIdFromName(dkpWinner.Item),
+                ItemName = dkpWinner.Item,
+                Notes = txtbx_RaidName.Text
+            });
             _dkpWinners.Add(dkpWinner);
             dgv_LootWinners.Refresh();
             return Task.CompletedTask;
@@ -152,10 +173,13 @@ namespace LootGoblin.Forms
             var foundDuplicateItems = _charactersAndItems
                 .Where(x => x.ParentId == foundCharacter?.ParentId && x.CharacterItems.Any(x => x.ItemName == itemName))
                 .Select(y => new
-                { Name = y.Character.Name, Date = y.CharacterItems.FirstOrDefault(z => z.ItemName == itemName)?.Date.ToShortDateString() }).Distinct().ToList();
+                {
+                    Name = y.Character.Name,
+                    Date = y.CharacterItems.FirstOrDefault(z => z.ItemName == itemName)?.Date.ToShortDateString()
+                }).Distinct().ToList();
 
             var foundItemName = Collect(trv_DkpBids.Nodes).FirstOrDefault(x => x.Text == itemName);
-            TreeNode newTreeNodeText = new TreeNode($"{bidAmount} | {biddersName} | {bidType}");
+            var newTreeNodeText = new TreeNode($"{bidAmount} | {biddersName} | {bidType}");
 
             if (foundDuplicateItems.Any())
             {
@@ -187,7 +211,7 @@ namespace LootGoblin.Forms
             }
             else
             {
-                TreeNode item = new TreeNode(itemName);
+                var item = new TreeNode(itemName);
                 item.Nodes.Add(newTreeNodeText);
                 trv_DkpBids.Nodes.Add(item);
             }
@@ -230,15 +254,19 @@ namespace LootGoblin.Forms
                         if (linkedCharacters?.LinkedCharacters != null)
                         {
                             foreach (var linkedCharacter in linkedCharacters.LinkedCharacters.Where(linkedCharacter =>
-                                         _charactersAndItems.All(x => x.Character.CharacterId != linkedCharacter.ChildId)))
+                                         _charactersAndItems.All(
+                                             x => x.Character.CharacterId != linkedCharacter.ChildId)))
                             {
-                                foundCharacter = _characters.FirstOrDefault(x => x.CharacterId == linkedCharacter.ChildId);
+                                foundCharacter =
+                                    _characters.FirstOrDefault(x => x.CharacterId == linkedCharacter.ChildId);
                                 var characterItems = await _openDkp.GetCharacterItems(linkedCharacter.ChildId);
                                 if (foundCharacter != null)
                                 {
-                                    if (_charactersAndItems.All(x => x.Character.CharacterId != foundCharacter.CharacterId))
+                                    if (_charactersAndItems.All(x =>
+                                            x.Character.CharacterId != foundCharacter.CharacterId))
                                     {
-                                        _charactersAndItems.Add(new DkpBidder(foundCharacter, linkedCharacter.ParentId, characterItems));
+                                        _charactersAndItems.Add(new DkpBidder(foundCharacter, linkedCharacter.ParentId,
+                                            characterItems));
                                     }
                                 }
                             }
@@ -263,7 +291,7 @@ namespace LootGoblin.Forms
 
                 if (foundCharacter != null)
                 {
-                    DkpBidder parentBidder = foundCharacter;
+                    var parentBidder = foundCharacter;
                     if (foundCharacter.ParentId != foundCharacter.Character.CharacterId)
                     {
                         parentBidder =
@@ -279,7 +307,8 @@ namespace LootGoblin.Forms
 
                     foreach (var characterItem in parentBidder.CharacterItems)
                     {
-                        parentCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
+                        parentCharacter.Nodes.Add(
+                            new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                     }
 
                     foreach (var linkedCharacter in linkedCharacters)
@@ -288,7 +317,8 @@ namespace LootGoblin.Forms
                             new TreeNode($"{linkedCharacter.Character.Name} | {linkedCharacter.Character.Class}");
                         foreach (var characterItem in linkedCharacter.CharacterItems)
                         {
-                            childCharacter.Nodes.Add(new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
+                            childCharacter.Nodes.Add(
+                                new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                         }
 
                         trv_CharacterList.Nodes.Add(childCharacter);
@@ -329,7 +359,8 @@ namespace LootGoblin.Forms
                     var splitMessage = trimmedMessage.Split(',');
                     var rollRange = splitMessage[0].Trim();
                     var playerRoll = splitMessage[1].Replace("but this time it turned up a ", $"").Trim();
-                    Task.Run(() => Task.FromResult(UpdateLootRolls(rollRange, _currentRandomLootPlayerName, playerRoll)));
+                    Task.Run(
+                        () => Task.FromResult(UpdateLootRolls(rollRange, _currentRandomLootPlayerName, playerRoll)));
                     _currentRandomLootPlayerName = "";
                 }
 
@@ -343,12 +374,10 @@ namespace LootGoblin.Forms
         {
             if (trv_LootRolls.InvokeRequired)
             {
-                trv_LootRolls.BeginInvoke(new Action(delegate
-                {
-                    UpdateLootRolls(rollRange, playerName, playerRoll);
-                }));
+                trv_LootRolls.BeginInvoke(new Action(delegate { UpdateLootRolls(rollRange, playerName, playerRoll); }));
                 return Task.CompletedTask;
             }
+
             trv_LootRolls.BeginUpdate();
             var newTreeNodeText = $"{playerRoll} | {playerName}";
             var foundRollRange = Collect(trv_LootRolls.Nodes).FirstOrDefault(x => x.Text == rollRange);
@@ -376,6 +405,7 @@ namespace LootGoblin.Forms
             {
                 trv_LootRolls.Nodes.Add(rollRange).Nodes.Add(newTreeNodeText);
             }
+
             trv_LootRolls.EndUpdate();
             trv_LootRolls.Sort();
             return Task.CompletedTask;
@@ -387,14 +417,17 @@ namespace LootGoblin.Forms
                 return;
             try
             {
-                var trimmedDateTime = messageToProcess.Replace("--", "")[26..].Replace("has looted a ", "").RemoveLastCharacter().Trim();
+                var trimmedDateTime = messageToProcess.Replace("--", "")[26..].Replace("has looted a ", "")
+                    .RemoveLastCharacter().Trim();
                 var playerName = trimmedDateTime.Split(" ")[0];
                 var lootedItem = trimmedDateTime[playerName.Length..].Trim();
                 if (string.IsNullOrEmpty(playerName) || string.IsNullOrEmpty(lootedItem))
                     return;
                 Task.Run(() => Task.FromResult(UpdateLootedItems(playerName, lootedItem)));
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         public Task UpdateLootedItems(string playerName, string lootedItem)
@@ -404,6 +437,7 @@ namespace LootGoblin.Forms
                 dgv_LootedItems.BeginInvoke(new Action(delegate { UpdateLootedItems(playerName, lootedItem); }));
                 return Task.CompletedTask;
             }
+
             dgv_LootedItems.Rows.Add(DateTime.Now.ToShortTimeString(), playerName, lootedItem);
             dgv_LootedItems.Update();
             return Task.CompletedTask;
@@ -421,45 +455,72 @@ namespace LootGoblin.Forms
                 //    yield return child;
             }
         }
+
         private void Test()
         {
             var rand = new Random();
-            ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(10, 300)}'");
+
+
+            #region Awarded Loot
+            //var grats = $"Congratulations! {PlayerName} bid {bidAmount} dkp for item: {item}"
+            ParseAwardedLoot($"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test1 bid 3 dkp for item: Ton Po's Eye Patch");
+            ParseAwardedLoot($"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test2 bid 4 dkp for item: Ton Po's Shoulder Wraps");
+            ParseAwardedLoot($"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test3 bid 5 dkp for item: Ton Po's Bo Stick of Understanding");
+            #endregion Awarded Loot
+
+            #region Bids
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(10, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 300)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(100, 300)} alt'");
-            ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(100, 300)} alt'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:58:55 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:58:58 2024] Splodies's eyes glow violet.");
             ParseDkpBids($"[Mon Nov 25 21:58:59 2024] Cyrano tells the raid,  'Crown of Rile {rand.Next(100, 300)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:02 2024] Karbin tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:02 2024] Karbin tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:02 2024] Broby tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:02 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:03 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(100, 300)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(100, 300)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:15 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(100, 300)}'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 300)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:24 2024] Dookii tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:24 2024] Booshsoaker tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:24 2024] Booshsoaker tells the raid,  'Robe of the Azure Sky {rand.Next(100, 300)}'");
             ParseDkpBids($"Mon Nov 25 21:59:24 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
-            ParseDkpBids($"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 30)} alt'");
-            ParseDkpBids($"[Mon Nov 25 21:59:33 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 30)} alt'");
+            ParseDkpBids(
+                $"[Mon Nov 25 21:59:33 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
             ParseDkpBids($"[Mon Nov 25 21:59:34 2024] Adann tells the raid,  'Oom afk'");
             ParseDkpBids($"[Mon Nov 25 21:59:35 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(100, 500)}'");
+            #endregion Bids
 
-
+            #region Rolls
             ParseLootRolls($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by Lenna.");
-            ParseLootRolls($"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 333, but this time it turned up a 329.");
+            ParseLootRolls(
+                $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 333, but this time it turned up a 329.");
             ParseLootRolls($"[Mon Jan 06 20:41:47 2025] **A Magic Die is rolled by Larrmada.");
-            ParseLootRolls($"[Mon Jan 06 20:41:47 2025] **It could have been any number from 0 to 444, but this time it turned up a 108.");
+            ParseLootRolls(
+                $"[Mon Jan 06 20:41:47 2025] **It could have been any number from 0 to 444, but this time it turned up a 108.");
             ParseLootRolls($"[Mon Jan 06 20:41:44 2025] **A Magic Die is rolled by Skallagrimsson.");
-            ParseLootRolls($"[Mon Jan 06 20:41:44 2025] **It could have been any number from 0 to 444, but this time it turned up a 167.");
+            ParseLootRolls(
+                $"[Mon Jan 06 20:41:44 2025] **It could have been any number from 0 to 444, but this time it turned up a 167.");
             ParseLootRolls($"[Mon Jan 06 20:41:43 2025] **A Magic Die is rolled by Gaff.");
-            ParseLootRolls($"[Mon Jan 06 20:41:43 2025] **It could have been any number from 0 to 333, but this time it turned up a 88.");
+            ParseLootRolls(
+                $"[Mon Jan 06 20:41:43 2025] **It could have been any number from 0 to 333, but this time it turned up a 88.");
             ParseLootRolls($"[Tue Jan 07 20:43:34 2025] **A Magic Die is rolled by Katrenia.");
-            ParseLootRolls($"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
+            ParseLootRolls(
+                $"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
             ParseLootRolls($"[Tue Jan 07 20:42:25 2025] **A Magic Die is rolled by Katrenia.");
-            ParseLootRolls($"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
+            ParseLootRolls(
+                $"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
 
             ParseLootedItems("[Tue Jan 07 23:02:17 2025] --Brodin has looted a Noise Maker.--");
             ParseLootedItems("[Tue Jan 07 22:58:58 2025] --Keliae has looted a Noise Maker.--");
@@ -468,12 +529,28 @@ namespace LootGoblin.Forms
             ParseLootedItems("[Wed Jan 08 14:23:56 2025] --Duvos has looted a Black Henbane.--");
             ParseLootedItems("[Mon Jan 06 20:34:55 2025] --Shadowsong has looted a Spell: Talisman of the Cat.--");
             ParseLootedItems("[Mon Jan 06 20:44:26 2025] --Arrecha has looted a Fire Opal.--");
+            #endregion Rolls
 
-            Task.Run(() => Task.FromResult(UpdateAwardedLoot(new DkpWinner("test", 2, "test"))));
-            Task.Run(() => Task.FromResult(UpdateAwardedLoot(new DkpWinner("test1", 2, "test1"))));
-            Task.Run(() => Task.FromResult(UpdateAwardedLoot(new DkpWinner("test2", 2, "test"))));
-
+            CurrentRaid.Ticks.Add(new Tick
+                    {
+                        Characters = _characters.Take(5).ToList().Select(x => x.Name).ToList(),
+                        Description = $"{txtbx_RaidName.Text} - AutoTick: 1",
+                        Value = txtbx_AutoTickDkp.Text
+                    });
+                    CurrentRaid.Ticks.Add(new Tick
+                    {
+                        Characters = _characters.Skip(5).Take(5).ToList().Select(x => x.Name).ToList(),
+                        Description = $"{txtbx_RaidName.Text} - AutoTick: 2",
+                        Value = txtbx_AutoTickDkp.Text
+                    });
+                    CurrentRaid.Ticks.Add(new Tick
+                    {
+                        Characters = _characters.Skip(3).Take(5).ToList().Select(x => x.Name).ToList(),
+                        Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
+                        Value = txtbx_AutoTickDkp.Text
+                    });
         }
+
         private void btn_ClearDkpBids_Click(object sender, EventArgs e)
         {
             trv_DkpBids.Nodes.Clear();
@@ -490,6 +567,7 @@ namespace LootGoblin.Forms
         }
 
         private bool _isSettingsFormShown = false;
+
         private void btn_OpenSettings_Click(object sender, EventArgs e)
         {
             if (!_isSettingsFormShown)
@@ -537,14 +615,19 @@ namespace LootGoblin.Forms
                 var playerName = splitBidInfo[1];
                 if (playerName == "You")
                     playerName = LootGoblin.Default.CharacterName;
-                Task.Run(async () => await ClipboardManager.CopyToClipboard($"Congratulations! {playerName} bid {splitBidInfo[0]} dkp for item: "));
+                Task.Run(async () =>
+                    await ClipboardManager.CopyToClipboard(
+                        $"Congratulations! {playerName} bid {splitBidInfo[0]} dkp for item: "));
                 Task.Run(async () => await UpdateCharacterList(playerName));
                 var currentDkp = _dkpSummary.Models.FirstOrDefault(x => x.CharacterName == playerName)!.CurrentDKP;
                 Task.Run(async () => await UpdateCharacterDkp(currentDkp));
 
             }
-            catch { }
+            catch
+            {
+            }
         }
+
         public Task UpdateCharacterDkp(double currentDkp)
         {
             if (lbl_CurrentDkp.InvokeRequired)
@@ -578,12 +661,14 @@ namespace LootGoblin.Forms
                 trv_LootRolls.BeginInvoke(new Action(delegate { UpdateDupeLoot(dupeLootSource); }));
                 return Task.CompletedTask;
             }
+
             dgv_DuplicateLoots.DataSource = dupeLootSource;
             dgv_DuplicateLoots.Refresh();
             return Task.CompletedTask;
         }
 
         private bool _bossManagerFormShown = false;
+
         private void btn_RaidManagement_Click(object sender, EventArgs e)
         {
             if (!_bossManagerFormShown)
@@ -608,11 +693,12 @@ namespace LootGoblin.Forms
                 var raidAttendance = await raidManagement.GetRaidAttendance();
                 if (_characters != null)
                 {
-                    var characters = _characters.Where(x => raidAttendance.Select(x => x.Player).Contains(x.Name)).ToList();
+                    var characters = _characters.Where(x => raidAttendance.Select(x => x.Player).Contains(x.Name))
+                        .ToList();
 
                     var autoTick = new Tick
                     {
-                        Characters = characters,
+                        Characters = characters.Select(x => x.Name).ToList(),
                         Description = $"{txtbx_TickDescription.Text}",
                         Value = txtbx_TickDkpValue.Text
                     };
@@ -627,6 +713,7 @@ namespace LootGoblin.Forms
         }
 
         private int _autoTickCount = 1;
+
         private void btn_AddAutoTick_Click(object sender, EventArgs e)
         {
             Task.Run(async () =>
@@ -635,7 +722,7 @@ namespace LootGoblin.Forms
                 var raidAttendance = await raidManagement.GetRaidAttendance();
                 if (_characters != null)
                 {
-                    var characters = _characters.Where(x => raidAttendance.Select(x => x.Player).Contains(x.Name)).ToList();
+                    var characters = raidAttendance.Select(x => x.Player).ToList();
 
                     var autoTick = new Tick
                     {
@@ -653,31 +740,33 @@ namespace LootGoblin.Forms
             });
         }
 
-        private bool timerStarted = false;
+        private bool _timerStarted = false;
+
         private void btn_StartAutoTickTimer_Click(object sender, EventArgs e)
         {
-            if (!timerStarted)
+            if (!_timerStarted)
             {
                 txtbx_AutoTickCountdown.Text = txtbx_AutoTickTimer.Text;
                 timer1.Interval = 1000;
                 timer1.Start();
-                timerStarted = true;
+                _timerStarted = true;
                 btn_StartAutoTickTimer.Text = "Stop Timer";
             }
             else
             {
                 timer1.Stop();
                 btn_StartAutoTickTimer.Text = "Start Timer";
-                timerStarted = false;
+                _timerStarted = false;
             }
 
         }
+
         private void timer1_Tick(object sender, EventArgs e)
         {
             if (int.Parse(txtbx_AutoTickCountdown.Text) != 0)
             {
                 txtbx_AutoTickCountdown.ForeColor = Color.Black;
-                int futureText = int.Parse(txtbx_AutoTickCountdown.Text) - 1;
+                var futureText = int.Parse(txtbx_AutoTickCountdown.Text) - 1;
                 txtbx_AutoTickCountdown.Text = futureText.ToString();
             }
             else
@@ -688,7 +777,7 @@ namespace LootGoblin.Forms
                 soundPlayer.Play(); // can also use soundPlayer.PlaySync()
                 timer1.Stop();
                 btn_StartAutoTickTimer.Text = "Start Timer";
-                timerStarted = false;
+                _timerStarted = false;
             }
         }
 
@@ -704,10 +793,11 @@ namespace LootGoblin.Forms
                 Order = 0
             };
             CurrentRaid.Attendance = 1;
-            Task.Run(async () => await _openDkp.SubmitRaid(CurrentRaid));
+            //Task.Run(async () => await _openDkp.SubmitRaid(CurrentRaid));
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
-            string fileName = $@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
-            string jsonString = JsonConvert.SerializeObject(CurrentRaid);
+            var fileName =
+                $@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
+            var jsonString = JsonConvert.SerializeObject(CurrentRaid);
             File.WriteAllText(fileName, jsonString);
         }
 
@@ -721,7 +811,8 @@ namespace LootGoblin.Forms
                 string.IsNullOrEmpty(LootGoblin.Default.Username) ||
                 string.IsNullOrEmpty(LootGoblin.Default.CharacterName))
             {
-                DialogResult result = MessageBox.Show("You have not setup Loot Goblin, would you like to enter settings now?", "Confirmation", MessageBoxButtons.YesNo);
+                var result = MessageBox.Show("You have not setup Loot Goblin, would you like to enter settings now?",
+                    "Confirmation", MessageBoxButtons.YesNo);
                 switch (result)
                 {
                     case DialogResult.Yes:
@@ -767,7 +858,8 @@ namespace LootGoblin.Forms
 
         private void btn_AddDkpWinner_Click(object sender, EventArgs e)
         {
-            _dkpWinners.Add(new DkpWinner(txtbx_DkpBidderName.Text, Convert.ToInt32(txtbx_DkpBidderValue.Text), txtbx_DkpBidderItem.Text));
+            _dkpWinners.Add(new DkpWinner(txtbx_DkpBidderName.Text, Convert.ToInt32(txtbx_DkpBidderValue.Text),
+                txtbx_DkpBidderItem.Text));
         }
     }
 }

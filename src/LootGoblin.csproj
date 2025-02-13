@@ -26,6 +26,9 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>LootGoblin.Designer.cs</LastGenOutput>
     </None>
+    <None Update="Resources\Items.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

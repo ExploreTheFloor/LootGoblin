@@ -9,6 +9,12 @@ namespace LootGoblin.Structure
 {
     public class CurrentRaid// Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
     {
+        public CurrentRaid()
+        {
+            Items = new List<Item>();
+            Ticks = new List<Tick>();
+            Pool = new Pool();
+        }
         [JsonProperty("Items")]
         public List<Item> Items { get; set; }
 
@@ -72,7 +78,7 @@ namespace LootGoblin.Structure
     public class Tick
     {
         [JsonProperty("Characters")]
-        public List<Character> Characters { get; set; }
+        public List<string> Characters { get; set; } = new List<string>();
 
         [JsonProperty("Description")]
         public string Description { get; set; }
