@@ -18,6 +18,6 @@ namespace LootGoblin.Structure
         public Character Character { get; set; }
         public int ParentId { get; set; }
         public int CurrentDkp { get; set; }
-        public List<CharacterItem> CharacterItems { get; set; }
+        public List<CharacterItem>? CharacterItems { get; set; }
     }
 }

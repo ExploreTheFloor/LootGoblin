@@ -1,4 +1,6 @@
 using LootGoblin.Forms;
+using Serilog;
+using Serilog.Events;
 
 namespace LootGoblin
 {
@@ -13,7 +15,12 @@ namespace LootGoblin
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.Run(new MainForm());
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .WriteTo.File($"Logs\\General-.txt", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Debug)
+                .WriteTo.File($"Logs\\Error-.txt", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Warning)
+                .CreateLogger();
+            Application.Run(new MainForm()); 
         }
     }
 }
