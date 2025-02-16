@@ -30,9 +30,7 @@ namespace LootGoblin.Helpers
                 // If they are the same length, call Compare.
                 return 1;
             }
-            catch (Exception e)
-            {
-            }
+            catch { }
             return 1;
         }
     }

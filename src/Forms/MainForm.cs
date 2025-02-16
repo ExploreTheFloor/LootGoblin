@@ -72,19 +72,19 @@ namespace LootGoblin.Forms
             if (messageToProcess.Contains("Congratulations!") && messageToProcess.Contains("bid") &&
                 messageToProcess.Contains("dkp for item:"))
             {
-                ParseAwardedLoot(messageToProcess);
+                Task.Run(() => ParseAwardedLoot(messageToProcess));
                 return;
             }
 
             if (messageToProcess.Contains("**"))
             {
-                ParseLootRolls(messageToProcess);
+                Task.Run(() => ParseLootRolls(messageToProcess));
                 return;
             }
 
             if (messageToProcess.Contains("] --") && messageToProcess.Contains("has looted a"))
             {
-                ParseLootedItems(messageToProcess);
+                Task.Run(() => ParseLootedItems(messageToProcess));
                 return;
             }
 
@@ -92,10 +92,10 @@ namespace LootGoblin.Forms
                 !messageToProcess.Contains($"tells {LootGoblin.Default.BidChannel}:"))
                 return;
 
-            ParseDkpBids(messageToProcess);
+            Task.Run(() => ParseDkpBids(messageToProcess));
         }
 
-        private void ParseAwardedLoot(string messageToProcess)
+        private async Task ParseAwardedLoot(string messageToProcess)
         {
             try
             {
@@ -109,7 +109,7 @@ namespace LootGoblin.Forms
                 var playerName = splitCongratsMessage.Split(" ")[0].Trim();
                 var bidAmount = Convert.ToInt32(splitCongratsMessage.Split(" ")[2].Trim());
                 var itemWon = messageToProcess[26..].Trim().Split(":")[1].Trim();
-                Task.Run(() => Task.FromResult(UpdateAwardedLoot(new DkpWinner(playerName, bidAmount, itemWon))));
+                await Task.FromResult(UpdateAwardedLoot(new DkpWinner(playerName, bidAmount, itemWon)));
             }
             catch (Exception ex)
             {
@@ -151,7 +151,7 @@ namespace LootGoblin.Forms
             return Task.CompletedTask;
         }
 
-        private void ParseDkpBids(string messageToProcess)
+        private async Task ParseDkpBids(string messageToProcess)
         {
             Log.Debug($"[{nameof(ParseDkpBids)}] {messageToProcess}");
             string bidAmount;
@@ -187,7 +187,7 @@ namespace LootGoblin.Forms
             if (string.IsNullOrEmpty(itemName) || string.IsNullOrEmpty(bidAmount) || !Char.IsDigit(bidAmount.Last()) ||
                 string.IsNullOrEmpty(biddersName) || string.IsNullOrEmpty(bidType))
                 return;
-            Task.Run(async () => await UpdateDkpBid(itemName, biddersName, bidAmount, bidType));
+            await UpdateDkpBid(itemName, biddersName, bidAmount, bidType);
         }
 
         private async Task UpdateDkpBid(string itemName, string biddersName, string bidAmount, string bidType)
@@ -268,10 +268,6 @@ namespace LootGoblin.Forms
         {
             try
             {
-                if (biddersName.Contains("Zibb"))
-                {
-                    var a = true;
-                }
                 Log.Debug($"[{nameof(AddBidderToCharacterItemList)}] Player: {biddersName}");
                 if (_characters == null)
                 {
@@ -297,6 +293,10 @@ namespace LootGoblin.Forms
                 var linkedCharacters = await _openDkp.GetLinkedCharacters(foundCharacter.CharacterId);
                 if (linkedCharacters?.LinkedCharacters == null || !linkedCharacters.LinkedCharacters.Any())
                 {
+                    Log.Information(
+                        $"[{nameof(AddBidderToCharacterItemList)}] Added Parent: {foundCharacter.Name} to Character Items.");
+                    var characterItems = await _openDkp.GetCharacterItems(foundCharacter.CharacterId);
+                    _charactersAndItems.Add(new DkpBidder(foundCharacter, foundCharacter.CharacterId, characterItems));
                     Log.Debug(
                         $"[{nameof(AddBidderToCharacterItemList)}] {foundCharacter.Name} has no linked Characters");
                     return;
@@ -322,6 +322,13 @@ namespace LootGoblin.Forms
                         }
                     }
                 }
+                else
+                {
+                    Log.Information(
+                        $"[{nameof(AddBidderToCharacterItemList)}] Added Parent: {foundCharacter.Name} to Character Items.");
+                    var characterItems = await _openDkp.GetCharacterItems(foundCharacter.CharacterId);
+                    _charactersAndItems.Add(new DkpBidder(foundCharacter, foundCharacter.CharacterId, characterItems));
+                }
 
                 foreach (var linkedCharacter in linkedCharacters.LinkedCharacters.Where(linkedCharacter =>
                              _charactersAndItems.All(x => x.Character.CharacterId != linkedCharacter.ChildId)))
@@ -336,7 +343,8 @@ namespace LootGoblin.Forms
                         continue;
                     }
 
-                    if (_charactersAndItems.Any(x => x.Character.CharacterId == foundChild.CharacterId))
+                    if (_charactersAndItems.Any(x => x.Character.CharacterId == foundChild.CharacterId) || 
+                        _charactersAndItems.Any(x => x.Character.Name == foundChild.Name))
                     {
                         Log.Debug(
                             $"[{nameof(AddBidderToCharacterItemList)}] Child Already Found for: {foundCharacter.Name}");
@@ -389,7 +397,7 @@ namespace LootGoblin.Forms
 
                     foreach (var characterItem in parentBidder.CharacterItems)
                     {
-                        Log.Debug($"[{nameof(UpdateCharacterList)}] Adding Item: {characterItem.ItemName} to Parent Character");
+                        Log.Debug($"[{nameof(UpdateCharacterList)}] Adding Item: {characterItem.ItemName} to [Parent]:{parentBidder.Character.Name}");
                         parentCharacter.Nodes.Add(
                             new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                     }
@@ -400,7 +408,7 @@ namespace LootGoblin.Forms
                             new TreeNode($"{linkedCharacter.Character.Name} | {linkedCharacter.Character.Class}");
                         foreach (var characterItem in linkedCharacter.CharacterItems)
                         {
-                            Log.Debug($"[{nameof(UpdateCharacterList)}] Adding Item: {characterItem.ItemName} to Linked Character");
+                            Log.Debug($"[{nameof(UpdateCharacterList)}] Adding Item: {characterItem.ItemName} to [Linked]:{linkedCharacter.Character.Name}");
                             childCharacter.Nodes.Add(
                                 new TreeNode($"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                         }
@@ -427,7 +435,7 @@ namespace LootGoblin.Forms
 
         private string _currentRandomLootPlayerName = "";
 
-        private void ParseLootRolls(string messageToProcess)
+        private async Task ParseLootRolls(string messageToProcess)
         {
             if (!messageToProcess.Contains("**"))
                 return;
@@ -448,7 +456,7 @@ namespace LootGoblin.Forms
                 var splitMessage = trimmedMessage.Split(',');
                 var rollRange = splitMessage[0].Trim();
                 var playerRoll = splitMessage[1].Replace("but this time it turned up a ", $"").Trim();
-                Task.Run(() => Task.FromResult(UpdateLootRolls(rollRange, _currentRandomLootPlayerName, playerRoll)));
+                await Task.FromResult(UpdateLootRolls(rollRange, _currentRandomLootPlayerName, playerRoll));
             }
             catch (Exception ex)
             {
@@ -509,7 +517,7 @@ namespace LootGoblin.Forms
             }
         }
 
-        public void ParseLootedItems(string messageToProcess)
+        public async Task ParseLootedItems(string messageToProcess)
         {
             if (!messageToProcess.Contains("] --") && !messageToProcess.Contains("has looted a"))
                 return;
@@ -522,7 +530,7 @@ namespace LootGoblin.Forms
                 var lootedItem = trimmedDateTime[playerName.Length..].Trim();
                 if (string.IsNullOrEmpty(playerName) || string.IsNullOrEmpty(lootedItem))
                     return;
-                Task.Run(() => Task.FromResult(UpdateLootedItems(playerName, lootedItem)));
+                await Task.FromResult(UpdateLootedItems(playerName, lootedItem));
             }
             catch (Exception ex)
             {
@@ -554,7 +562,7 @@ namespace LootGoblin.Forms
 
         #endregion ParseMessages
 
-        private void Test()
+        private Task Test()
         {
             var rand = new Random();
 
@@ -573,64 +581,91 @@ namespace LootGoblin.Forms
 
             #region Bids
 
+            MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(1, 100)}'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 100)} alt'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:58:55 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 200)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:58:58 2024] Splodies's eyes glow violet.");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:58:59 2024] Cyrano tells the raid,  'Crown of Rile {rand.Next(1, 100)}'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:02 2024] Karbin tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:02 2024] Broby tells the raid,  'Crown of Rile {rand.Next(100, 520)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:02 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(100, 200)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:03 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(100, 200)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:02 2024] Broby tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:02 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:03 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:15 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(300, 500)}'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(200, 300)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:24 2024] Dookii tells the raid,  'Crown of Rile {rand.Next(300, 500)}'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:24 2024] Booshsoaker tells the raid,  'Robe of the Azure Sky {rand.Next(200, 300)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"Mon Nov 25 21:59:24 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 30)} alt'");
+            Thread.Sleep(1000);
             MessageMonitor(
                 $"[Mon Nov 25 21:59:33 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:34 2024] Adann tells the raid,  'Oom afk'");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Nov 25 21:59:35 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
 
             #endregion Bids
 
             #region Rolls
 
-            MessageMonitor($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by Lenna.");
-            MessageMonitor(
-                $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 333, but this time it turned up a 329.");
-            MessageMonitor($"[Mon Jan 06 20:41:47 2025] **A Magic Die is rolled by Larrmada.");
-            MessageMonitor(
-                $"[Mon Jan 06 20:41:47 2025] **It could have been any number from 0 to 444, but this time it turned up a 108.");
-            MessageMonitor($"[Mon Jan 06 20:41:44 2025] **A Magic Die is rolled by Skallagrimsson.");
-            MessageMonitor(
-                $"[Mon Jan 06 20:41:44 2025] **It could have been any number from 0 to 444, but this time it turned up a 167.");
-            MessageMonitor($"[Mon Jan 06 20:41:43 2025] **A Magic Die is rolled by Gaff.");
-            MessageMonitor(
-                $"[Mon Jan 06 20:41:43 2025] **It could have been any number from 0 to 333, but this time it turned up a 88.");
-            MessageMonitor($"[Tue Jan 07 20:43:34 2025] **A Magic Die is rolled by Katrenia.");
-            MessageMonitor(
-                $"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
-            MessageMonitor($"[Tue Jan 07 20:42:25 2025] **A Magic Die is rolled by Katrenia.");
-            MessageMonitor(
-                $"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
+            //MessageMonitor($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by Lenna.");
+            //MessageMonitor(
+            //    $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 333, but this time it turned up a 329.");
+            //MessageMonitor($"[Mon Jan 06 20:41:47 2025] **A Magic Die is rolled by Larrmada.");
+            //MessageMonitor(
+            //    $"[Mon Jan 06 20:41:47 2025] **It could have been any number from 0 to 444, but this time it turned up a 108.");
+            //MessageMonitor($"[Mon Jan 06 20:41:44 2025] **A Magic Die is rolled by Skallagrimsson.");
+            //MessageMonitor(
+            //    $"[Mon Jan 06 20:41:44 2025] **It could have been any number from 0 to 444, but this time it turned up a 167.");
+            //MessageMonitor($"[Mon Jan 06 20:41:43 2025] **A Magic Die is rolled by Gaff.");
+            //MessageMonitor(
+            //    $"[Mon Jan 06 20:41:43 2025] **It could have been any number from 0 to 333, but this time it turned up a 88.");
+            //MessageMonitor($"[Tue Jan 07 20:43:34 2025] **A Magic Die is rolled by Katrenia.");
+            //MessageMonitor(
+            //    $"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
+            //MessageMonitor($"[Tue Jan 07 20:42:25 2025] **A Magic Die is rolled by Katrenia.");
+            //MessageMonitor(
+            //    $"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
 
             #endregion Rolls
 
@@ -664,6 +699,7 @@ namespace LootGoblin.Forms
             //    Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
             //    Value = txtbx_AutoTickDkp.Text
             //});
+            return Task.CompletedTask;
         }
 
         #region Events
@@ -778,7 +814,7 @@ namespace LootGoblin.Forms
 
         private void btn_Test_Click(object sender, EventArgs e)
         {
-            Test();
+            Task.Run(()=> Task.FromResult(Test()));
         }
 
         private void trv_DkpBids_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
