@@ -1,15 +1,12 @@
 using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Media;
 using LootGoblin.Helpers;
 using LootGoblin.Services;
 using LootGoblin.Structure;
 using LootGoblin.Windows;
-using Microsoft.VisualBasic.Logging;
 using Newtonsoft.Json;
-using Serilog;
-using Serilog.Core;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using static LootGoblin.Windows.Messaging;
 using Log = Serilog.Log;
 
 namespace LootGoblin.Forms
@@ -49,9 +46,24 @@ namespace LootGoblin.Forms
             trv_LootRolls.TreeViewNodeSorter = new BidSorter();
         }
 
+        private string ItemToLinkFromId(int itemId)
+        {
+            Clipboard.SetText("\u0012" + $"00{itemId} {GetItemNameFromId(itemId)}" + "\u0012");
+            return "\u0012" + $"{itemId} {GetItemNameFromId(itemId)}" + "\u0012";
+        }
+
+        private string ItemToLinkFromName(string itemName)
+        {
+            return "\u0012" + $"00{GetItemIdFromName(itemName)} {itemName}" + "\u0012";
+        }
+
         private int GetItemIdFromName(string itemName)
         {
             return _itemDictionary != null ? _itemDictionary.FirstOrDefault(x => x.Value == itemName).Key : 0;
+        }
+        private string GetItemNameFromId(int itemId)
+        {
+            return _itemDictionary != null ? _itemDictionary.FirstOrDefault(x => x.Key == itemId).Value : "";
         }
 
         IEnumerable<TreeNode> Collect(TreeNodeCollection nodes)
@@ -89,9 +101,10 @@ namespace LootGoblin.Forms
             }
 
             if (!string.IsNullOrWhiteSpace(LootGoblin.Default.BidChannel) &&
-                !messageToProcess.Contains($"tells {LootGoblin.Default.BidChannel}:"))
+                !messageToProcess.Contains($"tells {LootGoblin.Default.BidChannel}:") ||
+                (string.IsNullOrWhiteSpace(LootGoblin.Default.BidChannel) &&
+                 !messageToProcess.Contains($"tells the guild") && !messageToProcess.Contains($"tells the raid")))
                 return;
-
             Task.Run(() => ParseDkpBids(messageToProcess));
         }
 
@@ -227,7 +240,7 @@ namespace LootGoblin.Forms
                     newTreeNodeText.ForeColor = Color.Red;
                     foreach (var foundDuplicateItem in foundDuplicateItems)
                     {
-                        newTreeNodeText.ToolTipText += $"{foundDuplicateItem.Name} | {foundDuplicateItem.Date}\n";
+                        newTreeNodeText.ToolTipText += $"{foundDuplicateItem.Name} | {foundDuplicateItem.Date}";
                     }
                 }
 
@@ -343,7 +356,7 @@ namespace LootGoblin.Forms
                         continue;
                     }
 
-                    if (_charactersAndItems.Any(x => x.Character.CharacterId == foundChild.CharacterId) || 
+                    if (_charactersAndItems.Any(x => x.Character.CharacterId == foundChild.CharacterId) ||
                         _charactersAndItems.Any(x => x.Character.Name == foundChild.Name))
                     {
                         Log.Debug(
@@ -449,7 +462,7 @@ namespace LootGoblin.Forms
                     return;
                 }
 
-                if (!messageToProcess.Contains("**It could have been any number from")) 
+                if (!messageToProcess.Contains("**It could have been any number from"))
                     return;
 
                 var trimmedMessage = messageToProcess[64..];
@@ -648,57 +661,57 @@ namespace LootGoblin.Forms
 
             #region Rolls
 
-            //MessageMonitor($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by Lenna.");
-            //MessageMonitor(
-            //    $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 333, but this time it turned up a 329.");
-            //MessageMonitor($"[Mon Jan 06 20:41:47 2025] **A Magic Die is rolled by Larrmada.");
-            //MessageMonitor(
-            //    $"[Mon Jan 06 20:41:47 2025] **It could have been any number from 0 to 444, but this time it turned up a 108.");
-            //MessageMonitor($"[Mon Jan 06 20:41:44 2025] **A Magic Die is rolled by Skallagrimsson.");
-            //MessageMonitor(
-            //    $"[Mon Jan 06 20:41:44 2025] **It could have been any number from 0 to 444, but this time it turned up a 167.");
-            //MessageMonitor($"[Mon Jan 06 20:41:43 2025] **A Magic Die is rolled by Gaff.");
-            //MessageMonitor(
-            //    $"[Mon Jan 06 20:41:43 2025] **It could have been any number from 0 to 333, but this time it turned up a 88.");
-            //MessageMonitor($"[Tue Jan 07 20:43:34 2025] **A Magic Die is rolled by Katrenia.");
-            //MessageMonitor(
-            //    $"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
-            //MessageMonitor($"[Tue Jan 07 20:42:25 2025] **A Magic Die is rolled by Katrenia.");
-            //MessageMonitor(
-            //    $"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
+            MessageMonitor($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by Lenna.");
+            MessageMonitor(
+                $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 333, but this time it turned up a 329.");
+            MessageMonitor($"[Mon Jan 06 20:41:47 2025] **A Magic Die is rolled by Larrmada.");
+            MessageMonitor(
+                $"[Mon Jan 06 20:41:47 2025] **It could have been any number from 0 to 444, but this time it turned up a 108.");
+            MessageMonitor($"[Mon Jan 06 20:41:44 2025] **A Magic Die is rolled by Skallagrimsson.");
+            MessageMonitor(
+                $"[Mon Jan 06 20:41:44 2025] **It could have been any number from 0 to 444, but this time it turned up a 167.");
+            MessageMonitor($"[Mon Jan 06 20:41:43 2025] **A Magic Die is rolled by Gaff.");
+            MessageMonitor(
+                $"[Mon Jan 06 20:41:43 2025] **It could have been any number from 0 to 333, but this time it turned up a 88.");
+            MessageMonitor($"[Tue Jan 07 20:43:34 2025] **A Magic Die is rolled by Katrenia.");
+            MessageMonitor(
+                $"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
+            MessageMonitor($"[Tue Jan 07 20:42:25 2025] **A Magic Die is rolled by Katrenia.");
+            MessageMonitor(
+                $"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
 
             #endregion Rolls
 
             #region Looted
 
-            //MessageMonitor("[Tue Jan 07 23:02:17 2025] --Brodin has looted a Noise Maker.--");
-            //MessageMonitor("[Tue Jan 07 22:58:58 2025] --Keliae has looted a Noise Maker.--");
-            //MessageMonitor("[Wed Jan 08 09:49:19 2025] --Spideroxy has looted a Salil's Writ Pg. 174.--");
-            //MessageMonitor("[Wed Jan 08 09:49:21 2025] --Atlasius has looted a Green Silken Drape.--");
-            //MessageMonitor("[Wed Jan 08 14:23:56 2025] --Duvos has looted a Black Henbane.--");
-            //MessageMonitor("[Mon Jan 06 20:34:55 2025] --Shadowsong has looted a Spell: Talisman of the Cat.--");
-            //MessageMonitor("[Mon Jan 06 20:44:26 2025] --Arrecha has looted a Fire Opal.--");
+            MessageMonitor("[Tue Jan 07 23:02:17 2025] --Brodin has looted a Noise Maker.--");
+            MessageMonitor("[Tue Jan 07 22:58:58 2025] --Keliae has looted a Noise Maker.--");
+            MessageMonitor("[Wed Jan 08 09:49:19 2025] --Spideroxy has looted a Salil's Writ Pg. 174.--");
+            MessageMonitor("[Wed Jan 08 09:49:21 2025] --Atlasius has looted a Green Silken Drape.--");
+            MessageMonitor("[Wed Jan 08 14:23:56 2025] --Duvos has looted a Black Henbane.--");
+            MessageMonitor("[Mon Jan 06 20:34:55 2025] --Shadowsong has looted a Spell: Talisman of the Cat.--");
+            MessageMonitor("[Mon Jan 06 20:44:26 2025] --Arrecha has looted a Fire Opal.--");
 
             #endregion Looted
 
-            //CurrentRaid.Ticks.Add(new Tick
-            //{
-            //    Characters = _characters.Take(5).ToList().Select(x => x.Name).ToList(),
-            //    Description = $"{txtbx_RaidName.Text} - AutoTick: 1",
-            //    Value = txtbx_AutoTickDkp.Text
-            //});
-            //CurrentRaid.Ticks.Add(new Tick
-            //{
-            //    Characters = _characters.Skip(5).Take(5).ToList().Select(x => x.Name).ToList(),
-            //    Description = $"{txtbx_RaidName.Text} - AutoTick: 2",
-            //    Value = txtbx_AutoTickDkp.Text
-            //});
-            //CurrentRaid.Ticks.Add(new Tick
-            //{
-            //    Characters = _characters.Skip(3).Take(5).ToList().Select(x => x.Name).ToList(),
-            //    Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
-            //    Value = txtbx_AutoTickDkp.Text
-            //});
+            CurrentRaid.Ticks.Add(new Tick
+            {
+                Characters = _characters.Take(5).ToList().Select(x => x.Name).ToList(),
+                Description = $"{txtbx_RaidName.Text} - AutoTick: 1",
+                Value = txtbx_AutoTickDkp.Text
+            });
+            CurrentRaid.Ticks.Add(new Tick
+            {
+                Characters = _characters.Skip(5).Take(5).ToList().Select(x => x.Name).ToList(),
+                Description = $"{txtbx_RaidName.Text} - AutoTick: 2",
+                Value = txtbx_AutoTickDkp.Text
+            });
+            CurrentRaid.Ticks.Add(new Tick
+            {
+                Characters = _characters.Skip(3).Take(5).ToList().Select(x => x.Name).ToList(),
+                Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
+                Value = txtbx_AutoTickDkp.Text
+            });
             return Task.CompletedTask;
         }
 
@@ -742,7 +755,7 @@ namespace LootGoblin.Forms
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"{btn_DuplicateLoot_Click} \n{ex.InnerException}");
+                    Log.Error($"{btn_DuplicateLoot_Click} {ex.InnerException}");
                 }
             });
 
@@ -814,7 +827,7 @@ namespace LootGoblin.Forms
 
         private void btn_Test_Click(object sender, EventArgs e)
         {
-            Task.Run(()=> Task.FromResult(Test()));
+            Task.Run(() => Task.FromResult(Test()));
         }
 
         private void trv_DkpBids_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -830,7 +843,7 @@ namespace LootGoblin.Forms
                     playerName = LootGoblin.Default.CharacterName;
                 Task.Run(async () =>
                     await ClipboardManager.CopyToClipboard(
-                        $"Congratulations! {playerName} bid {splitBidInfo[0]} dkp for item: "));
+                        $"Congratulations! {playerName} bid {splitBidInfo[0]} dkp for item: {ItemToLinkFromName(e.Node.Parent.Text.Trim())}"));
                 Task.Run(async () => await UpdateCharacterList(playerName));
                 var currentDkp = _dkpSummary.Models.FirstOrDefault(x => x.CharacterName == playerName)!.CurrentDKP;
                 Task.Run(async () => await UpdateCharacterDkp(currentDkp));
@@ -857,7 +870,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"{UpdateCharacterDkp} CurrentDkp: {currentDkp} \n{ex.InnerException}");
+                Log.Error($"{UpdateCharacterDkp} CurrentDkp: {currentDkp} {ex.InnerException}");
                 return Task.CompletedTask;
             }
         }

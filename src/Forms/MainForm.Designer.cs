@@ -626,7 +626,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(462, 584);
+            ClientSize = new Size(462, 615);
             Controls.Add(btn_Test);
             Controls.Add(btn_OpenSettings);
             Controls.Add(btn_LogMonitor);
