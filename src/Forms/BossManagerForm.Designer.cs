@@ -34,8 +34,6 @@
             btn_AddOrEditBossDkpValue = new Button();
             txtbx_BossDkpValue = new TextBox();
             dgv_BossDkpValues = new DataGridView();
-            BossName = new DataGridViewTextBoxColumn();
-            Value = new DataGridViewTextBoxColumn();
             btn_RemoveBossDkpValue = new Button();
             ((System.ComponentModel.ISupportInitialize)dgv_BossDkpValues).BeginInit();
             SuspendLayout();
@@ -71,8 +69,9 @@
             btn_AddOrEditBossDkpValue.Name = "btn_AddOrEditBossDkpValue";
             btn_AddOrEditBossDkpValue.Size = new Size(126, 42);
             btn_AddOrEditBossDkpValue.TabIndex = 30;
-            btn_AddOrEditBossDkpValue.Text = "Add/Edit";
+            btn_AddOrEditBossDkpValue.Text = "Add";
             btn_AddOrEditBossDkpValue.UseVisualStyleBackColor = true;
+            btn_AddOrEditBossDkpValue.Click += btn_AddOrEditBossDkpValue_Click;
             // 
             // txtbx_BossDkpValue
             // 
@@ -86,21 +85,12 @@
             dgv_BossDkpValues.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgv_BossDkpValues.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
             dgv_BossDkpValues.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgv_BossDkpValues.Columns.AddRange(new DataGridViewColumn[] { BossName, Value });
             dgv_BossDkpValues.Location = new Point(12, 12);
             dgv_BossDkpValues.Name = "dgv_BossDkpValues";
+            dgv_BossDkpValues.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgv_BossDkpValues.Size = new Size(422, 329);
             dgv_BossDkpValues.TabIndex = 27;
-            // 
-            // BossName
-            // 
-            BossName.HeaderText = "Boss";
-            BossName.Name = "BossName";
-            // 
-            // Value
-            // 
-            Value.HeaderText = "Value";
-            Value.Name = "Value";
+            dgv_BossDkpValues.CellClick += dgv_BossDkpValues_CellClick;
             // 
             // btn_RemoveBossDkpValue
             // 
@@ -110,6 +100,7 @@
             btn_RemoveBossDkpValue.TabIndex = 28;
             btn_RemoveBossDkpValue.Text = "Remove";
             btn_RemoveBossDkpValue.UseVisualStyleBackColor = true;
+            btn_RemoveBossDkpValue.Click += btn_RemoveBossDkpValue_Click;
             // 
             // BossManagerForm
             // 
@@ -138,7 +129,5 @@
         private TextBox txtbx_BossDkpValue;
         private DataGridView dgv_BossDkpValues;
         private Button btn_RemoveBossDkpValue;
-        private DataGridViewTextBoxColumn BossName;
-        private DataGridViewTextBoxColumn Value;
     }
 }

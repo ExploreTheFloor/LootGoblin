@@ -13,11 +13,11 @@ namespace LootGoblin.Forms
 {
     public partial class MainForm : Form
     {
-
+        public static BindingList<BossManagement>? BossValues = new BindingList<BossManagement>();
         private readonly OpenDkp _openDkp = new OpenDkp();
         private LogMonitor? _logMonitor = null;
         private readonly SettingsForm _settingsForm = new SettingsForm();
-        private readonly BossManagerForm _bossManagerForm = new BossManagerForm();
+        private BossManagerForm _bossManagerForm = new BossManagerForm();
         private List<Character>? _characters = new List<Character>();
         private DKPSummary _dkpSummary = new DKPSummary();
         public CurrentRaid CurrentRaid = new CurrentRaid();
@@ -37,11 +37,20 @@ namespace LootGoblin.Forms
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
             if (!Directory.Exists($@"{eqDir}\BackUp"))
                 Directory.CreateDirectory($@"{eqDir}\BackUp");
+            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}Settings"))
+                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}Settings");
             if (!Directory.Exists($@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}"))
                 Directory.CreateDirectory($@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}");
             _itemDictionary =
                 JsonConvert.DeserializeObject<Dictionary<int, string>>(
                     File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Items.Json"));
+            if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"))
+            {
+                BossValues =
+                    JsonConvert.DeserializeObject<BindingList<BossManagement>>(
+                        File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"));
+            }
+
             trv_DkpBids.TreeViewNodeSorter = new BidSorter();
             trv_LootRolls.TreeViewNodeSorter = new BidSorter();
         }
@@ -781,6 +790,7 @@ namespace LootGoblin.Forms
             if (!_bossManagerFormShown)
             {
                 _bossManagerFormShown = true;
+                _bossManagerForm = new BossManagerForm();
                 _bossManagerForm.Show();
                 btn_BossManagement.Text = "Close Boss Management";
             }
