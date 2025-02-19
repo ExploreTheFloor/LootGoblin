@@ -1,4 +1,5 @@
-﻿using LootGoblin.Structure;
+﻿using System.Diagnostics;
+using LootGoblin.Structure;
 using Newtonsoft.Json;
 
 namespace LootGoblin.Services
@@ -109,13 +110,22 @@ namespace LootGoblin.Services
 
         public async Task SubmitRaid(CurrentRaid currentRaid)
         {
-            var client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Put, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/raids");
-            var jsonSerialized = JsonConvert.SerializeObject(currentRaid);
-            var content = new StringContent(jsonSerialized, null, "application/x-amz-json-1.1");
-            request.Content = content;
-            var response = await client.SendAsync(request).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var client = new HttpClient();
+                var request = new HttpRequestMessage(HttpMethod.Put, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/raids");
+                request.Headers.Add("Authorization", AuthenticationResult?.AccessToken);
+                var jsonSerialized = JsonConvert.SerializeObject(currentRaid);
+                var content = new StringContent(jsonSerialized, null, "application/x-amz-json-1.1");
+                request.Content = content;
+                var response = await client.SendAsync(request).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                throw;
+            }
         }
     }
 }

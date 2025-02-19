@@ -112,10 +112,12 @@
             // 
             // tabPage5
             // 
+            tabPage5.Controls.Add(label5);
             tabPage5.Controls.Add(btn_ClearDkpWinner);
             tabPage5.Controls.Add(btn_AddAutoTick);
             tabPage5.Controls.Add(label13);
             tabPage5.Controls.Add(txtbx_AutoTickTimer);
+            tabPage5.Controls.Add(txtbx_RaidName);
             tabPage5.Controls.Add(btn_BossManagement);
             tabPage5.Controls.Add(btn_RemoveDkpWinner);
             tabPage5.Controls.Add(label12);
@@ -348,22 +350,20 @@
             // panel4
             // 
             panel4.BorderStyle = BorderStyle.FixedSingle;
-            panel4.Controls.Add(label5);
             panel4.Controls.Add(label9);
             panel4.Controls.Add(txtbx_TickDescription);
-            panel4.Controls.Add(txtbx_RaidName);
             panel4.Controls.Add(txtbx_TickDkpValue);
             panel4.Controls.Add(label8);
             panel4.Controls.Add(btn_SubmitManualTick);
-            panel4.Location = new Point(6, 3);
+            panel4.Location = new Point(6, 35);
             panel4.Name = "panel4";
-            panel4.Size = new Size(330, 106);
+            panel4.Size = new Size(330, 74);
             panel4.TabIndex = 18;
             // 
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(6, 10);
+            label5.Location = new Point(13, 9);
             label5.Name = "label5";
             label5.Size = new Size(68, 15);
             label5.TabIndex = 12;
@@ -372,29 +372,29 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(6, 39);
+            label9.Location = new Point(6, 13);
             label9.Name = "label9";
-            label9.Size = new Size(70, 15);
+            label9.Size = new Size(66, 15);
             label9.TabIndex = 21;
-            label9.Text = "Description:";
+            label9.Text = "Tick Name:";
             // 
             // txtbx_TickDescription
             // 
-            txtbx_TickDescription.Location = new Point(80, 36);
+            txtbx_TickDescription.Location = new Point(80, 10);
             txtbx_TickDescription.Name = "txtbx_TickDescription";
             txtbx_TickDescription.Size = new Size(245, 23);
             txtbx_TickDescription.TabIndex = 20;
             // 
             // txtbx_RaidName
             // 
-            txtbx_RaidName.Location = new Point(80, 7);
+            txtbx_RaidName.Location = new Point(87, 6);
             txtbx_RaidName.Name = "txtbx_RaidName";
             txtbx_RaidName.Size = new Size(245, 23);
             txtbx_RaidName.TabIndex = 11;
             // 
             // txtbx_TickDkpValue
             // 
-            txtbx_TickDkpValue.Location = new Point(80, 65);
+            txtbx_TickDkpValue.Location = new Point(80, 39);
             txtbx_TickDkpValue.Name = "txtbx_TickDkpValue";
             txtbx_TickDkpValue.Size = new Size(59, 23);
             txtbx_TickDkpValue.TabIndex = 17;
@@ -402,7 +402,7 @@
             // label8
             // 
             label8.AutoSize = true;
-            label8.Location = new Point(40, 69);
+            label8.Location = new Point(40, 43);
             label8.Name = "label8";
             label8.Size = new Size(32, 15);
             label8.TabIndex = 16;
@@ -410,7 +410,7 @@
             // 
             // btn_SubmitManualTick
             // 
-            btn_SubmitManualTick.Location = new Point(145, 65);
+            btn_SubmitManualTick.Location = new Point(145, 39);
             btn_SubmitManualTick.Name = "btn_SubmitManualTick";
             btn_SubmitManualTick.Size = new Size(180, 23);
             btn_SubmitManualTick.TabIndex = 6;
@@ -626,7 +626,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(462, 615);
+            ClientSize = new Size(462, 723);
             Controls.Add(btn_Test);
             Controls.Add(btn_OpenSettings);
             Controls.Add(btn_LogMonitor);

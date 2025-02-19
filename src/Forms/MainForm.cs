@@ -641,19 +641,18 @@ namespace LootGoblin.Forms
         {
             var rand = new Random();
             #region Kill Message
-            MessageMonitor("Druzzil Ro tells the guild, 'Remorse of Savage> has killed a dracoliche in Plane of Fear Instanced !'");
+            //MessageMonitor("Druzzil Ro tells the guild, 'Remorse of Savage> has killed a dracoliche in Plane of Fear Instanced !'");
             #endregion Kill Message
 
-            return Task.CompletedTask;
             #region Awarded Loot
 
             //var grats = $"Congratulations! {PlayerName} bid {bidAmount} dkp for item: {item}"
-            //MessageMonitor(
-            //    $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test1 bid 3 dkp for item: Ton Po's Eye Patch");
-            //MessageMonitor(
-            //    $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test2 bid 4 dkp for item: Ton Po's Shoulder Wraps");
-            //MessageMonitor(
-            //    $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test3 bid 5 dkp for item: Ton Po's Bo Stick of Understanding");
+            MessageMonitor(
+                $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test1 bid 3 dkp for item: Ton Po's Eye Patch");
+            MessageMonitor(
+                $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test2 bid 4 dkp for item: Ton Po's Shoulder Wraps");
+            MessageMonitor(
+                $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test3 bid 5 dkp for item: Ton Po's Bo Stick of Understanding");
 
             #endregion Awarded Loot
 
@@ -970,6 +969,10 @@ namespace LootGoblin.Forms
                 {
                     MessageBox.Show(@"Unable to locate Raid Tick.  Please type /output RaidList in game.");
                 }
+
+                txtbx_TickDescription.Text = "";
+                txtbx_TickDkpValue.Text = "";
+
             });
         }
 
@@ -1065,6 +1068,7 @@ namespace LootGoblin.Forms
                 $@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
             var jsonString = JsonConvert.SerializeObject(CurrentRaid);
             File.WriteAllText(fileName, jsonString);
+            Task.Run(async () => await _openDkp.SubmitRaid(CurrentRaid));
         }
 
         private void dgv_LootWinners_CellClick(object sender, DataGridViewCellEventArgs e)
