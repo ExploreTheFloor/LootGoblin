@@ -83,7 +83,7 @@
             btn_LogMonitor = new Button();
             btn_OpenSettings = new Button();
             btn_Test = new Button();
-            timer1 = new System.Windows.Forms.Timer(components);
+            RaidTickTimer = new System.Windows.Forms.Timer(components);
             tabControl1.SuspendLayout();
             tabPage5.SuspendLayout();
             panel2.SuspendLayout();
@@ -618,9 +618,9 @@
             btn_Test.UseVisualStyleBackColor = true;
             btn_Test.Click += btn_Test_Click;
             // 
-            // timer1
+            // RaidTickTimer
             // 
-            timer1.Tick += timer1_Tick;
+            RaidTickTimer.Tick += timer1_Tick;
             // 
             // MainForm
             // 
@@ -707,7 +707,7 @@
         private TextBox txtbx_AutoTickTimer;
         private Button btn_AddAutoTick;
         private Button btn_Test;
-        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Timer RaidTickTimer;
         private Button btn_ClearDkpWinner;
     }
 }

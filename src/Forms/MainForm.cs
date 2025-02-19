@@ -90,6 +90,11 @@ namespace LootGoblin.Forms
 
         private void MessageMonitor(string messageToProcess)
         {
+            if (messageToProcess.Contains("Druzzil Ro tells the guild") && messageToProcess.Contains("has killed a"))
+            {
+                Task.Run(() => ParseKillMessage(messageToProcess));
+                return;
+            }
             if (messageToProcess.Contains("Congratulations!") && messageToProcess.Contains("bid") &&
                 messageToProcess.Contains("dkp for item:"))
             {
@@ -115,6 +120,54 @@ namespace LootGoblin.Forms
                  !messageToProcess.Contains($"tells the guild") && !messageToProcess.Contains($"tells the raid")))
                 return;
             Task.Run(() => ParseDkpBids(messageToProcess));
+        }
+
+        private async Task ParseKillMessage(string messageToProcess)
+        {
+            if (BossValues == null || !BossValues.Any())
+                return;
+            //Druzzil Ro tells the guild, 'Remorse of Savage> has killed a dracoliche in Plane of Fear Instanced !'
+            Log.Debug($"[{nameof(ParseKillMessage)}] {messageToProcess}");
+
+            var nameOfKill = messageToProcess.Split("has killed a")[1].Trim().Split(" in ")[0].Trim();
+            if (string.IsNullOrWhiteSpace(nameOfKill))
+            {
+                Log.Error($"Unable to Parse Kill Message: {nameOfKill}!");
+                return;
+            }
+
+            var foundBoss = BossValues.FirstOrDefault(x => x.Name == nameOfKill);
+            if (foundBoss == null)
+            {
+                Log.Debug($"There is no value set for boss: {nameOfKill}!");
+                return;
+            }
+
+            MessageBox.Show("Please type /output raidlist in game and then hit Ok.", $"{nameOfKill} - Raid Tick Kill");
+
+            var raidManagement = new RaidManagement();
+            var raidAttendance = await raidManagement.GetRaidAttendance();
+            if (!raidAttendance.Any())
+            {
+                Log.Warning($"Unable to raid attendance!");
+                return;
+            }
+            if (_characters != null)
+            {
+                var characters = raidAttendance.Select(x => x.Player).ToList();
+
+                var autoTick = new Tick
+                {
+                    Characters = characters,
+                    Description = $"{txtbx_RaidName.Text} - Kill: {nameOfKill}",
+                    Value = foundBoss.Dkp.ToString()
+                };
+                CurrentRaid.Ticks.Add(autoTick);
+            }
+            else
+            {
+                MessageBox.Show(@"Unable to locate characters for Raid Attendance.  Please type /output RaidList in game.");
+            }
         }
 
         private async Task ParseAwardedLoot(string messageToProcess)
@@ -587,8 +640,11 @@ namespace LootGoblin.Forms
         private Task Test()
         {
             var rand = new Random();
+            #region Kill Message
+            MessageMonitor("Druzzil Ro tells the guild, 'Remorse of Savage> has killed a dracoliche in Plane of Fear Instanced !'");
+            #endregion Kill Message
 
-
+            return Task.CompletedTask;
             #region Awarded Loot
 
             //var grats = $"Congratulations! {PlayerName} bid {bidAmount} dkp for item: {item}"
@@ -891,6 +947,11 @@ namespace LootGoblin.Forms
             {
                 var raidManagement = new RaidManagement();
                 var raidAttendance = await raidManagement.GetRaidAttendance();
+                if (!raidAttendance.Any())
+                {
+                    Log.Warning($"Unable to raid attendance!");
+                    return;
+                }
                 if (_characters != null)
                 {
                     var characters = _characters.Where(x => raidAttendance.Select(x => x.Player).Contains(x.Name))
@@ -920,6 +981,11 @@ namespace LootGoblin.Forms
             {
                 var raidManagement = new RaidManagement();
                 var raidAttendance = await raidManagement.GetRaidAttendance();
+                if (!raidAttendance.Any())
+                {
+                    Log.Warning($"Unable to raid attendance!");
+                    return;
+                }
                 if (_characters != null)
                 {
                     var characters = raidAttendance.Select(x => x.Player).ToList();
@@ -947,14 +1013,14 @@ namespace LootGoblin.Forms
             if (!_timerStarted)
             {
                 txtbx_AutoTickCountdown.Text = txtbx_AutoTickTimer.Text;
-                timer1.Interval = 1000;
-                timer1.Start();
+                RaidTickTimer.Interval = 1000;
+                RaidTickTimer.Start();
                 _timerStarted = true;
                 btn_StartAutoTickTimer.Text = "Stop Timer";
             }
             else
             {
-                timer1.Stop();
+                RaidTickTimer.Stop();
                 btn_StartAutoTickTimer.Text = "Start Timer";
                 _timerStarted = false;
             }
@@ -975,7 +1041,7 @@ namespace LootGoblin.Forms
                 txtbx_AutoTickCountdown.ForeColor = Color.Red;
                 using var soundPlayer = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
                 soundPlayer.Play(); // can also use soundPlayer.PlaySync()
-                timer1.Stop();
+                RaidTickTimer.Stop();
                 btn_StartAutoTickTimer.Text = "Start Timer";
                 _timerStarted = false;
             }
