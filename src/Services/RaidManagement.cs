@@ -1,4 +1,5 @@
 ﻿using LootGoblin.Structure;
+using Serilog;
 
 namespace LootGoblin.Services
 {
@@ -11,12 +12,19 @@ namespace LootGoblin.Services
 
         public Task BackUpRaidTickFiles()
         {
+            Log.Debug($"[{nameof(BackUpRaidTickFiles)}]");
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
+            if (eqDir == null)
+            {
+                Log.Warning($"[{nameof(BackUpRaidTickFiles)}] Unable to locate Raid Tick file: {eqDir}.");
+                return Task.CompletedTask;
+            }
             var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
             var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
             foreach (var raidTickFile in raidTickFiles)
             {
-                File.Copy(raidTickFile, $@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}");
+                Log.Debug($"Copying: {raidTickFile} to {AppDomain.CurrentDomain.BaseDirectory}\\BackUp\\{DateTime.Now.ToShortDateString().Replace("/", "-")}\\{Path.GetFileName(raidTickFile)}");
+                File.Copy(raidTickFile, $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}");
             }
 
             return Task.CompletedTask;
@@ -24,11 +32,13 @@ namespace LootGoblin.Services
 
         public Task ClearRaidTickFiles()
         {
+            Log.Debug($"[{nameof(ClearRaidTickFiles)}]");
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
             var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
             var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
             foreach (var raidTickFile in raidTickFiles)
             {
+                Log.Debug($"[{nameof(ClearRaidTickFiles)}] Deleting: {raidTickFile}");
                 File.Delete(raidTickFile);
             }
 
@@ -37,6 +47,7 @@ namespace LootGoblin.Services
 
         public async Task<List<RaidMember>> GetRaidAttendance()
         {
+            Log.Debug($"[{nameof(GetRaidAttendance)}]");
             List<RaidMember> raidMembers = new List<RaidMember>();
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
             var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
@@ -55,6 +66,11 @@ namespace LootGoblin.Services
                     }));
                 await BackUpRaidTickFiles();
             }
+            else
+            {
+                Log.Warning($"[{nameof(GetRaidAttendance)}] Unable to locate Raid Tick file: {eqDir}.");
+            }
+
 
             return raidMembers.Where(x => x.Level != "Level").ToList();
         }

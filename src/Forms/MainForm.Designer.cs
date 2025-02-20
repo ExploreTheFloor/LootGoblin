@@ -32,10 +32,12 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             tabControl1 = new TabControl();
             tabPage5 = new TabPage();
+            label5 = new Label();
             btn_ClearDkpWinner = new Button();
             btn_AddAutoTick = new Button();
             label13 = new Label();
             txtbx_AutoTickTimer = new TextBox();
+            txtbx_RaidName = new TextBox();
             btn_BossManagement = new Button();
             btn_RemoveDkpWinner = new Button();
             label12 = new Label();
@@ -49,16 +51,15 @@
             label7 = new Label();
             txtbx_DkpBidderName = new TextBox();
             panel2 = new Panel();
-            txtbx_AutoTickCountdown = new TextBox();
+            label6 = new Label();
+            txtbx_AutoTickCountdownSeconds = new TextBox();
             label4 = new Label();
-            label3 = new Label();
+            txtbx_AutoTickCountdownMinutes = new TextBox();
             txtbx_DkpBidderValue = new TextBox();
             dgv_LootWinners = new DataGridView();
             panel4 = new Panel();
-            label5 = new Label();
             label9 = new Label();
             txtbx_TickDescription = new TextBox();
-            txtbx_RaidName = new TextBox();
             txtbx_TickDkpValue = new TextBox();
             label8 = new Label();
             btn_SubmitManualTick = new Button();
@@ -142,6 +143,15 @@
             tabPage5.Text = "Raid Management";
             tabPage5.UseVisualStyleBackColor = true;
             // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(13, 9);
+            label5.Name = "label5";
+            label5.Size = new Size(68, 15);
+            label5.TabIndex = 12;
+            label5.Text = "Raid Name:";
+            // 
             // btn_ClearDkpWinner
             // 
             btn_ClearDkpWinner.Location = new Point(294, 446);
@@ -178,6 +188,13 @@
             txtbx_AutoTickTimer.Size = new Size(61, 23);
             txtbx_AutoTickTimer.TabIndex = 33;
             txtbx_AutoTickTimer.Text = "60";
+            // 
+            // txtbx_RaidName
+            // 
+            txtbx_RaidName.Location = new Point(87, 6);
+            txtbx_RaidName.Name = "txtbx_RaidName";
+            txtbx_RaidName.Size = new Size(245, 23);
+            txtbx_RaidName.TabIndex = 11;
             // 
             // btn_BossManagement
             // 
@@ -290,41 +307,54 @@
             // panel2
             // 
             panel2.BorderStyle = BorderStyle.FixedSingle;
-            panel2.Controls.Add(txtbx_AutoTickCountdown);
+            panel2.Controls.Add(label6);
+            panel2.Controls.Add(txtbx_AutoTickCountdownSeconds);
             panel2.Controls.Add(label4);
-            panel2.Controls.Add(label3);
+            panel2.Controls.Add(txtbx_AutoTickCountdownMinutes);
             panel2.Location = new Point(342, 3);
             panel2.Name = "panel2";
             panel2.Size = new Size(85, 106);
             panel2.TabIndex = 10;
             // 
-            // txtbx_AutoTickCountdown
+            // label6
             // 
-            txtbx_AutoTickCountdown.Font = new Font("Segoe UI", 27.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtbx_AutoTickCountdown.Location = new Point(10, 28);
-            txtbx_AutoTickCountdown.Name = "txtbx_AutoTickCountdown";
-            txtbx_AutoTickCountdown.Size = new Size(62, 57);
-            txtbx_AutoTickCountdown.TabIndex = 7;
-            txtbx_AutoTickCountdown.Text = "0";
-            txtbx_AutoTickCountdown.TextAlign = HorizontalAlignment.Center;
+            label6.AutoSize = true;
+            label6.Location = new Point(15, 85);
+            label6.Name = "label6";
+            label6.Size = new Size(50, 15);
+            label6.TabIndex = 10;
+            label6.Text = "seconds";
+            // 
+            // txtbx_AutoTickCountdownSeconds
+            // 
+            txtbx_AutoTickCountdownSeconds.Font = new Font("Segoe UI", 12F);
+            txtbx_AutoTickCountdownSeconds.Location = new Point(9, 53);
+            txtbx_AutoTickCountdownSeconds.Name = "txtbx_AutoTickCountdownSeconds";
+            txtbx_AutoTickCountdownSeconds.ReadOnly = true;
+            txtbx_AutoTickCountdownSeconds.Size = new Size(62, 29);
+            txtbx_AutoTickCountdownSeconds.TabIndex = 8;
+            txtbx_AutoTickCountdownSeconds.Text = "0";
+            txtbx_AutoTickCountdownSeconds.TextAlign = HorizontalAlignment.Center;
             // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(17, 88);
+            label4.Location = new Point(15, 35);
             label4.Name = "label4";
             label4.Size = new Size(50, 15);
             label4.TabIndex = 9;
             label4.Text = "minutes";
             // 
-            // label3
+            // txtbx_AutoTickCountdownMinutes
             // 
-            label3.AutoSize = true;
-            label3.Location = new Point(11, 10);
-            label3.Name = "label3";
-            label3.Size = new Size(59, 15);
-            label3.TabIndex = 8;
-            label3.Text = "Next Tick:";
+            txtbx_AutoTickCountdownMinutes.Font = new Font("Segoe UI", 12F);
+            txtbx_AutoTickCountdownMinutes.Location = new Point(9, 3);
+            txtbx_AutoTickCountdownMinutes.Name = "txtbx_AutoTickCountdownMinutes";
+            txtbx_AutoTickCountdownMinutes.ReadOnly = true;
+            txtbx_AutoTickCountdownMinutes.Size = new Size(62, 29);
+            txtbx_AutoTickCountdownMinutes.TabIndex = 7;
+            txtbx_AutoTickCountdownMinutes.Text = "0";
+            txtbx_AutoTickCountdownMinutes.TextAlign = HorizontalAlignment.Center;
             // 
             // txtbx_DkpBidderValue
             // 
@@ -360,15 +390,6 @@
             panel4.Size = new Size(330, 74);
             panel4.TabIndex = 18;
             // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Location = new Point(13, 9);
-            label5.Name = "label5";
-            label5.Size = new Size(68, 15);
-            label5.TabIndex = 12;
-            label5.Text = "Raid Name:";
-            // 
             // label9
             // 
             label9.AutoSize = true;
@@ -384,13 +405,6 @@
             txtbx_TickDescription.Name = "txtbx_TickDescription";
             txtbx_TickDescription.Size = new Size(245, 23);
             txtbx_TickDescription.TabIndex = 20;
-            // 
-            // txtbx_RaidName
-            // 
-            txtbx_RaidName.Location = new Point(87, 6);
-            txtbx_RaidName.Name = "txtbx_RaidName";
-            txtbx_RaidName.Size = new Size(245, 23);
-            txtbx_RaidName.TabIndex = 11;
             // 
             // txtbx_TickDkpValue
             // 
@@ -626,7 +640,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(462, 723);
+            ClientSize = new Size(462, 615);
             Controls.Add(btn_Test);
             Controls.Add(btn_OpenSettings);
             Controls.Add(btn_LogMonitor);
@@ -679,8 +693,7 @@
         private TabPage tabPage5;
         private Panel panel2;
         private Label label4;
-        private Label label3;
-        private TextBox txtbx_AutoTickCountdown;
+        private TextBox txtbx_AutoTickCountdownMinutes;
         private Button btn_SubmitManualTick;
         private TextBox txtbx_RaidName;
         private Label label5;
@@ -709,5 +722,7 @@
         private Button btn_Test;
         private System.Windows.Forms.Timer RaidTickTimer;
         private Button btn_ClearDkpWinner;
+        private Label label6;
+        private TextBox txtbx_AutoTickCountdownSeconds;
     }
 }

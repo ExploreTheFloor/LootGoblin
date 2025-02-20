@@ -5,8 +5,6 @@ using LootGoblin.Services;
 using LootGoblin.Structure;
 using LootGoblin.Windows;
 using Newtonsoft.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using static LootGoblin.Windows.Messaging;
 using Log = Serilog.Log;
 
 namespace LootGoblin.Forms
@@ -34,13 +32,12 @@ namespace LootGoblin.Forms
                 _dkpSummary = await _openDkp.GetDKPSummary();
             });
             dgv_LootWinners.DataSource = _dkpWinners;
-            var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
-            if (!Directory.Exists($@"{eqDir}\BackUp"))
-                Directory.CreateDirectory($@"{eqDir}\BackUp");
+            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp"))
+                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp");
             if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}Settings"))
                 Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}Settings");
-            if (!Directory.Exists($@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}"))
-                Directory.CreateDirectory($@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}");
+            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}"))
+                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}");
             _itemDictionary =
                 JsonConvert.DeserializeObject<Dictionary<int, string>>(
                     File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Items.Json"));
@@ -132,14 +129,14 @@ namespace LootGoblin.Forms
             var nameOfKill = messageToProcess.Split("has killed a")[1].Trim().Split(" in ")[0].Trim();
             if (string.IsNullOrWhiteSpace(nameOfKill))
             {
-                Log.Error($"Unable to Parse Kill Message: {nameOfKill}!");
+                Log.Error($"[{nameof(ParseKillMessage)}] Unable to Parse Kill Message: {nameOfKill}!");
                 return;
             }
 
             var foundBoss = BossValues.FirstOrDefault(x => x.Name == nameOfKill);
             if (foundBoss == null)
             {
-                Log.Debug($"There is no value set for boss: {nameOfKill}!");
+                Log.Debug($"[{nameof(ParseKillMessage)}] There is no value set for boss: {nameOfKill}!");
                 return;
             }
 
@@ -149,7 +146,7 @@ namespace LootGoblin.Forms
             var raidAttendance = await raidManagement.GetRaidAttendance();
             if (!raidAttendance.Any())
             {
-                Log.Warning($"Unable to raid attendance!");
+                Log.Warning($"[{nameof(ParseKillMessage)}] Unable to raid attendance!");
                 return;
             }
             if (_characters != null)
@@ -549,6 +546,7 @@ namespace LootGoblin.Forms
 
             try
             {
+                Log.Debug($"[{nameof(UpdateLootRolls)}] Player: {playerName} | Range: {rollRange} | Roll: {playerRoll}");
                 trv_LootRolls.BeginUpdate();
                 var newTreeNodeText = $"{playerRoll} | {playerName}";
                 var foundRollRange = Collect(trv_LootRolls.Nodes).FirstOrDefault(x => x.Text == rollRange);
@@ -578,7 +576,7 @@ namespace LootGoblin.Forms
                     trv_LootRolls.Nodes.Add(rollRange).Nodes.Add(newTreeNodeText);
                 }
 
-                Log.Information($"[{nameof(ParseLootRolls)}] Range: {rollRange} Name: {playerName} Roll: {playerRoll}");
+                Log.Information($"[{nameof(ParseLootRolls)}] Added Range: {rollRange} Name: {playerName} Roll: {playerRoll}");
                 trv_LootRolls.EndUpdate();
                 trv_LootRolls.Sort();
                 _currentRandomLootPlayerName = "";
@@ -811,6 +809,7 @@ namespace LootGoblin.Forms
             {
                 try
                 {
+                    Log.Information($"[{nameof(btn_DuplicateLoot_Click)}] Starting Duplicate Item Search");
                     var tools = new Tools();
                     var findDupes = await tools.FindDuplicateLoots();
                     var dupeLootSource = new BindingList<GridViewItemDuplicate>(findDupes.Select(x =>
@@ -819,7 +818,7 @@ namespace LootGoblin.Forms
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"{btn_DuplicateLoot_Click} {ex.InnerException}");
+                    Log.Error($"[{nameof(btn_DuplicateLoot_Click)}] {ex.InnerException}");
                 }
             });
 
@@ -836,6 +835,24 @@ namespace LootGoblin.Forms
             dgv_DuplicateLoots.DataSource = dupeLootSource;
             dgv_DuplicateLoots.Refresh();
             return Task.CompletedTask;
+        }
+        public void UpdateTextBoxForegroundColor(TextBox textBox, Color color)
+        {
+            if (textBox.InvokeRequired)
+            {
+                textBox.BeginInvoke(new Action(delegate { UpdateTextBoxForegroundColor(textBox, color); }));
+                return;
+            }
+            textBox.ForeColor = color;
+        }
+        public void UpdateTextBoxBackgroundColor(TextBox textBox, Color color)
+        {
+            if (textBox.InvokeRequired)
+            {
+                textBox.BeginInvoke(new Action(delegate { UpdateTextBoxBackgroundColor(textBox, color); }));
+                return;
+            }
+            textBox.BackColor = color;
         }
 
         private bool _bossManagerFormShown = false;
@@ -916,7 +933,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"{trv_DkpBids_NodeMouseClick} {ex.InnerException}");
+                Log.Error($"[{nameof(trv_DkpBids_NodeMouseClick)}] {ex.InnerException}");
             }
         }
 
@@ -948,7 +965,7 @@ namespace LootGoblin.Forms
                 var raidAttendance = await raidManagement.GetRaidAttendance();
                 if (!raidAttendance.Any())
                 {
-                    Log.Warning($"Unable to raid attendance!");
+                    Log.Warning($"[{nameof(btn_SubmitManualTick_Click)}] Unable to raid attendance!");
                     return;
                 }
                 if (_characters != null)
@@ -986,7 +1003,7 @@ namespace LootGoblin.Forms
                 var raidAttendance = await raidManagement.GetRaidAttendance();
                 if (!raidAttendance.Any())
                 {
-                    Log.Warning($"Unable to raid attendance!");
+                    Log.Warning($"[{nameof(btn_AddAutoTick_Click)}] Unable to raid attendance!");
                     return;
                 }
                 if (_characters != null)
@@ -1013,40 +1030,62 @@ namespace LootGoblin.Forms
 
         private void btn_StartAutoTickTimer_Click(object sender, EventArgs e)
         {
-            if (!_timerStarted)
+            try
             {
-                txtbx_AutoTickCountdown.Text = txtbx_AutoTickTimer.Text;
-                RaidTickTimer.Interval = 1000;
-                RaidTickTimer.Start();
-                _timerStarted = true;
-                btn_StartAutoTickTimer.Text = "Stop Timer";
+                if (!_timerStarted)
+                {
+                    UpdateTextBoxBackgroundColor(txtbx_AutoTickCountdownMinutes, Color.White);
+                    UpdateTextBoxBackgroundColor(txtbx_AutoTickCountdownSeconds, Color.White);
+                    txtbx_AutoTickCountdownMinutes.Text = (int.Parse(txtbx_AutoTickTimer.Text) - 1).ToString();
+                    txtbx_AutoTickCountdownSeconds.Text = "60";
+                    RaidTickTimer.Interval = 1000;
+                    _timerStarted = true;
+                    RaidTickTimer.Start();
+                    btn_StartAutoTickTimer.Text = "Stop Timer";
+                }
+                else
+                {
+                    _timerStarted = false;
+                    RaidTickTimer.Stop();
+                    btn_StartAutoTickTimer.Text = "Start Timer";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                RaidTickTimer.Stop();
-                btn_StartAutoTickTimer.Text = "Start Timer";
-                _timerStarted = false;
+                Log.Error($"[{nameof(btn_StartAutoTickTimer_Click)}] {ex.InnerException}");
             }
 
         }
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (int.Parse(txtbx_AutoTickCountdown.Text) != 0)
+            try
             {
-                txtbx_AutoTickCountdown.ForeColor = Color.Black;
-                var futureText = int.Parse(txtbx_AutoTickCountdown.Text) - 1;
-                txtbx_AutoTickCountdown.Text = futureText.ToString();
+                if (int.Parse(txtbx_AutoTickCountdownMinutes.Text) != 0 || int.Parse(txtbx_AutoTickCountdownSeconds.Text) != 0)
+                {
+                    if (int.Parse(txtbx_AutoTickCountdownSeconds.Text) == 0)
+                    {
+                        txtbx_AutoTickCountdownMinutes.Text = (int.Parse(txtbx_AutoTickCountdownMinutes.Text) - 1).ToString();
+                        txtbx_AutoTickCountdownSeconds.Text = "60";
+                    }
+                    txtbx_AutoTickCountdownSeconds.Text = (int.Parse(txtbx_AutoTickCountdownSeconds.Text) - 1).ToString();
+                }
+                else
+                {
+                    this.BringToFront();
+                    UpdateTextBoxBackgroundColor(txtbx_AutoTickCountdownMinutes, Color.Red);
+                    UpdateTextBoxBackgroundColor(txtbx_AutoTickCountdownSeconds, Color.Red);
+
+                    using var soundPlayer = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
+                    soundPlayer.Play(); // can also use soundPlayer.PlaySync()
+                    RaidTickTimer.Stop();
+                    btn_StartAutoTickTimer.Text = "Start Timer";
+                    _timerStarted = false;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                this.BringToFront();
-                txtbx_AutoTickCountdown.ForeColor = Color.Red;
-                using var soundPlayer = new SoundPlayer(@"c:\Windows\Media\chimes.wav");
-                soundPlayer.Play(); // can also use soundPlayer.PlaySync()
-                RaidTickTimer.Stop();
-                btn_StartAutoTickTimer.Text = "Start Timer";
-                _timerStarted = false;
+                Log.Error($"[{nameof(timer1_Tick)}] {ex.InnerException}");
             }
         }
 
@@ -1062,10 +1101,8 @@ namespace LootGoblin.Forms
                 Order = 0
             };
             CurrentRaid.Attendance = 1;
-            //Task.Run(async () => await _openDkp.SubmitRaid(CurrentRaid));
-            var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
             var fileName =
-                $@"{eqDir}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
+                $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
             var jsonString = JsonConvert.SerializeObject(CurrentRaid);
             File.WriteAllText(fileName, jsonString);
             Task.Run(async () => await _openDkp.SubmitRaid(CurrentRaid));
