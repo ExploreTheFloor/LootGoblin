@@ -85,6 +85,8 @@
             btn_OpenSettings = new Button();
             btn_Test = new Button();
             RaidTickTimer = new System.Windows.Forms.Timer(components);
+            AutoTickReminder = new System.ComponentModel.BackgroundWorker();
+            trv_RaidDisplay = new TreeView();
             tabControl1.SuspendLayout();
             tabPage5.SuspendLayout();
             panel2.SuspendLayout();
@@ -636,11 +638,25 @@
             // 
             RaidTickTimer.Tick += timer1_Tick;
             // 
+            // AutoTickReminder
+            // 
+            AutoTickReminder.WorkerReportsProgress = true;
+            AutoTickReminder.WorkerSupportsCancellation = true;
+            AutoTickReminder.DoWork += AutoTickReminder_DoWork;
+            // 
+            // trv_RaidDisplay
+            // 
+            trv_RaidDisplay.Location = new Point(449, 12);
+            trv_RaidDisplay.Name = "trv_RaidDisplay";
+            trv_RaidDisplay.Size = new Size(220, 566);
+            trv_RaidDisplay.TabIndex = 9;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(462, 615);
+            ClientSize = new Size(670, 582);
+            Controls.Add(trv_RaidDisplay);
             Controls.Add(btn_Test);
             Controls.Add(btn_OpenSettings);
             Controls.Add(btn_LogMonitor);
@@ -724,5 +740,7 @@
         private Button btn_ClearDkpWinner;
         private Label label6;
         private TextBox txtbx_AutoTickCountdownSeconds;
+        private System.ComponentModel.BackgroundWorker AutoTickReminder;
+        private TreeView trv_RaidDisplay;
     }
 }
