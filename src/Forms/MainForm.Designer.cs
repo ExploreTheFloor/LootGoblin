@@ -33,36 +33,41 @@
             tabControl1 = new TabControl();
             tabPage5 = new TabPage();
             label5 = new Label();
-            btn_ClearDkpWinner = new Button();
-            btn_AddAutoTick = new Button();
-            label13 = new Label();
-            txtbx_AutoTickTimer = new TextBox();
-            txtbx_RaidName = new TextBox();
-            btn_BossManagement = new Button();
-            btn_RemoveDkpWinner = new Button();
-            label12 = new Label();
-            btn_AddDkpWinner = new Button();
-            txtbx_AutoTickDkp = new TextBox();
-            btn_StartAutoTickTimer = new Button();
-            label2 = new Label();
-            txtbx_DkpBidderItem = new TextBox();
-            btn_SubmitRaid = new Button();
-            label11 = new Label();
-            label7 = new Label();
-            txtbx_DkpBidderName = new TextBox();
-            panel2 = new Panel();
-            label6 = new Label();
-            txtbx_AutoTickCountdownSeconds = new TextBox();
-            label4 = new Label();
-            txtbx_AutoTickCountdownMinutes = new TextBox();
-            txtbx_DkpBidderValue = new TextBox();
-            dgv_LootWinners = new DataGridView();
+            tabControl2 = new TabControl();
+            tabPage6 = new TabPage();
             panel4 = new Panel();
             label9 = new Label();
             txtbx_TickDescription = new TextBox();
             txtbx_TickDkpValue = new TextBox();
             label8 = new Label();
             btn_SubmitManualTick = new Button();
+            dgv_RaidTicks = new DataGridView();
+            btn_RemoveRaidTick = new Button();
+            btn_AddAutoTick = new Button();
+            txtbx_AutoTickDkp = new TextBox();
+            label12 = new Label();
+            label13 = new Label();
+            txtbx_AutoTickTimer = new TextBox();
+            btn_StartAutoTickTimer = new Button();
+            panel2 = new Panel();
+            label6 = new Label();
+            txtbx_AutoTickCountdownSeconds = new TextBox();
+            label4 = new Label();
+            txtbx_AutoTickCountdownMinutes = new TextBox();
+            tabPage7 = new TabPage();
+            dgv_LootWinners = new DataGridView();
+            btn_ClearDkpWinner = new Button();
+            btn_AddDkpWinner = new Button();
+            btn_RemoveDkpWinner = new Button();
+            txtbx_DkpBidderItem = new TextBox();
+            txtbx_DkpBidderValue = new TextBox();
+            label2 = new Label();
+            txtbx_DkpBidderName = new TextBox();
+            label11 = new Label();
+            label7 = new Label();
+            btn_BossManagement = new Button();
+            btn_SubmitRaid = new Button();
+            txtbx_RaidName = new TextBox();
             tabPage1 = new TabPage();
             lbl_CurrentDkp = new Label();
             label1 = new Label();
@@ -87,11 +92,16 @@
             RaidTickTimer = new System.Windows.Forms.Timer(components);
             AutoTickReminder = new System.ComponentModel.BackgroundWorker();
             trv_RaidDisplay = new TreeView();
+            btn_RefreshCurrentRaid = new Button();
             tabControl1.SuspendLayout();
             tabPage5.SuspendLayout();
-            panel2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dgv_LootWinners).BeginInit();
+            tabControl2.SuspendLayout();
+            tabPage6.SuspendLayout();
             panel4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_RaidTicks).BeginInit();
+            panel2.SuspendLayout();
+            tabPage7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_LootWinners).BeginInit();
             tabPage1.SuspendLayout();
             tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
@@ -116,27 +126,10 @@
             // tabPage5
             // 
             tabPage5.Controls.Add(label5);
-            tabPage5.Controls.Add(btn_ClearDkpWinner);
-            tabPage5.Controls.Add(btn_AddAutoTick);
-            tabPage5.Controls.Add(label13);
-            tabPage5.Controls.Add(txtbx_AutoTickTimer);
-            tabPage5.Controls.Add(txtbx_RaidName);
+            tabPage5.Controls.Add(tabControl2);
             tabPage5.Controls.Add(btn_BossManagement);
-            tabPage5.Controls.Add(btn_RemoveDkpWinner);
-            tabPage5.Controls.Add(label12);
-            tabPage5.Controls.Add(btn_AddDkpWinner);
-            tabPage5.Controls.Add(txtbx_AutoTickDkp);
-            tabPage5.Controls.Add(btn_StartAutoTickTimer);
-            tabPage5.Controls.Add(label2);
-            tabPage5.Controls.Add(txtbx_DkpBidderItem);
             tabPage5.Controls.Add(btn_SubmitRaid);
-            tabPage5.Controls.Add(label11);
-            tabPage5.Controls.Add(label7);
-            tabPage5.Controls.Add(txtbx_DkpBidderName);
-            tabPage5.Controls.Add(panel2);
-            tabPage5.Controls.Add(txtbx_DkpBidderValue);
-            tabPage5.Controls.Add(dgv_LootWinners);
-            tabPage5.Controls.Add(panel4);
+            tabPage5.Controls.Add(txtbx_RaidName);
             tabPage5.Location = new Point(4, 24);
             tabPage5.Name = "tabPage5";
             tabPage5.Padding = new Padding(3);
@@ -148,236 +141,43 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(13, 9);
+            label5.Location = new Point(9, 9);
             label5.Name = "label5";
             label5.Size = new Size(68, 15);
             label5.TabIndex = 12;
             label5.Text = "Raid Name:";
             // 
-            // btn_ClearDkpWinner
+            // tabControl2
             // 
-            btn_ClearDkpWinner.Location = new Point(294, 446);
-            btn_ClearDkpWinner.Name = "btn_ClearDkpWinner";
-            btn_ClearDkpWinner.Size = new Size(130, 23);
-            btn_ClearDkpWinner.TabIndex = 36;
-            btn_ClearDkpWinner.Text = "Clear Selection";
-            btn_ClearDkpWinner.UseVisualStyleBackColor = true;
-            btn_ClearDkpWinner.Click += btn_ClearDkpWinner_Click;
+            tabControl2.Appearance = TabAppearance.FlatButtons;
+            tabControl2.Controls.Add(tabPage6);
+            tabControl2.Controls.Add(tabPage7);
+            tabControl2.Location = new Point(6, 33);
+            tabControl2.Name = "tabControl2";
+            tabControl2.SelectedIndex = 0;
+            tabControl2.Size = new Size(418, 440);
+            tabControl2.SizeMode = TabSizeMode.Fixed;
+            tabControl2.TabIndex = 33;
             // 
-            // btn_AddAutoTick
+            // tabPage6
             // 
-            btn_AddAutoTick.Location = new Point(6, 115);
-            btn_AddAutoTick.Name = "btn_AddAutoTick";
-            btn_AddAutoTick.Size = new Size(200, 51);
-            btn_AddAutoTick.TabIndex = 35;
-            btn_AddAutoTick.Text = "Add Auto Tick";
-            btn_AddAutoTick.UseVisualStyleBackColor = true;
-            btn_AddAutoTick.Click += btn_AddAutoTick_Click;
-            // 
-            // label13
-            // 
-            label13.AutoSize = true;
-            label13.Location = new Point(205, 145);
-            label13.Name = "label13";
-            label13.Size = new Size(64, 15);
-            label13.TabIndex = 34;
-            label13.Text = "Tick Timer:";
-            // 
-            // txtbx_AutoTickTimer
-            // 
-            txtbx_AutoTickTimer.Location = new Point(275, 141);
-            txtbx_AutoTickTimer.Name = "txtbx_AutoTickTimer";
-            txtbx_AutoTickTimer.Size = new Size(61, 23);
-            txtbx_AutoTickTimer.TabIndex = 33;
-            txtbx_AutoTickTimer.Text = "60";
-            // 
-            // txtbx_RaidName
-            // 
-            txtbx_RaidName.Location = new Point(87, 6);
-            txtbx_RaidName.Name = "txtbx_RaidName";
-            txtbx_RaidName.Size = new Size(245, 23);
-            txtbx_RaidName.TabIndex = 11;
-            // 
-            // btn_BossManagement
-            // 
-            btn_BossManagement.Location = new Point(6, 478);
-            btn_BossManagement.Name = "btn_BossManagement";
-            btn_BossManagement.Size = new Size(129, 24);
-            btn_BossManagement.TabIndex = 32;
-            btn_BossManagement.Text = "Boss Management";
-            btn_BossManagement.UseVisualStyleBackColor = true;
-            btn_BossManagement.Click += btn_RaidManagement_Click;
-            // 
-            // btn_RemoveDkpWinner
-            // 
-            btn_RemoveDkpWinner.Location = new Point(150, 446);
-            btn_RemoveDkpWinner.Name = "btn_RemoveDkpWinner";
-            btn_RemoveDkpWinner.Size = new Size(130, 23);
-            btn_RemoveDkpWinner.TabIndex = 21;
-            btn_RemoveDkpWinner.Text = "Remove";
-            btn_RemoveDkpWinner.UseVisualStyleBackColor = true;
-            btn_RemoveDkpWinner.Click += btn_RemoveDkpWinner_Click;
-            // 
-            // label12
-            // 
-            label12.AutoSize = true;
-            label12.Location = new Point(236, 117);
-            label12.Name = "label12";
-            label12.Size = new Size(32, 15);
-            label12.TabIndex = 31;
-            label12.Text = "DKP:";
-            // 
-            // btn_AddDkpWinner
-            // 
-            btn_AddDkpWinner.Location = new Point(5, 446);
-            btn_AddDkpWinner.Name = "btn_AddDkpWinner";
-            btn_AddDkpWinner.Size = new Size(130, 23);
-            btn_AddDkpWinner.TabIndex = 23;
-            btn_AddDkpWinner.Text = "Add";
-            btn_AddDkpWinner.UseVisualStyleBackColor = true;
-            btn_AddDkpWinner.Click += btn_AddDkpWinner_Click;
-            // 
-            // txtbx_AutoTickDkp
-            // 
-            txtbx_AutoTickDkp.Location = new Point(275, 114);
-            txtbx_AutoTickDkp.Name = "txtbx_AutoTickDkp";
-            txtbx_AutoTickDkp.Size = new Size(61, 23);
-            txtbx_AutoTickDkp.TabIndex = 30;
-            txtbx_AutoTickDkp.Text = "2";
-            // 
-            // btn_StartAutoTickTimer
-            // 
-            btn_StartAutoTickTimer.Location = new Point(342, 113);
-            btn_StartAutoTickTimer.Name = "btn_StartAutoTickTimer";
-            btn_StartAutoTickTimer.Size = new Size(85, 51);
-            btn_StartAutoTickTimer.TabIndex = 26;
-            btn_StartAutoTickTimer.Text = "Start Timer";
-            btn_StartAutoTickTimer.UseVisualStyleBackColor = true;
-            btn_StartAutoTickTimer.Click += btn_StartAutoTickTimer_Click;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new Point(132, 399);
-            label2.Name = "label2";
-            label2.Size = new Size(31, 15);
-            label2.TabIndex = 29;
-            label2.Text = "Item";
-            // 
-            // txtbx_DkpBidderItem
-            // 
-            txtbx_DkpBidderItem.Location = new Point(132, 417);
-            txtbx_DkpBidderItem.Name = "txtbx_DkpBidderItem";
-            txtbx_DkpBidderItem.Size = new Size(226, 23);
-            txtbx_DkpBidderItem.TabIndex = 28;
-            // 
-            // btn_SubmitRaid
-            // 
-            btn_SubmitRaid.Location = new Point(150, 479);
-            btn_SubmitRaid.Name = "btn_SubmitRaid";
-            btn_SubmitRaid.Size = new Size(274, 23);
-            btn_SubmitRaid.TabIndex = 27;
-            btn_SubmitRaid.Text = "Submit Raid";
-            btn_SubmitRaid.UseVisualStyleBackColor = true;
-            btn_SubmitRaid.Click += btn_SubmitRaid_Click;
-            // 
-            // label11
-            // 
-            label11.AutoSize = true;
-            label11.Location = new Point(3, 399);
-            label11.Name = "label11";
-            label11.Size = new Size(39, 15);
-            label11.TabIndex = 26;
-            label11.Text = "Player";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new Point(364, 399);
-            label7.Name = "label7";
-            label7.Size = new Size(28, 15);
-            label7.TabIndex = 25;
-            label7.Text = "Dkp";
-            // 
-            // txtbx_DkpBidderName
-            // 
-            txtbx_DkpBidderName.Location = new Point(5, 417);
-            txtbx_DkpBidderName.Name = "txtbx_DkpBidderName";
-            txtbx_DkpBidderName.Size = new Size(121, 23);
-            txtbx_DkpBidderName.TabIndex = 24;
-            // 
-            // panel2
-            // 
-            panel2.BorderStyle = BorderStyle.FixedSingle;
-            panel2.Controls.Add(label6);
-            panel2.Controls.Add(txtbx_AutoTickCountdownSeconds);
-            panel2.Controls.Add(label4);
-            panel2.Controls.Add(txtbx_AutoTickCountdownMinutes);
-            panel2.Location = new Point(342, 3);
-            panel2.Name = "panel2";
-            panel2.Size = new Size(85, 106);
-            panel2.TabIndex = 10;
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Location = new Point(15, 85);
-            label6.Name = "label6";
-            label6.Size = new Size(50, 15);
-            label6.TabIndex = 10;
-            label6.Text = "seconds";
-            // 
-            // txtbx_AutoTickCountdownSeconds
-            // 
-            txtbx_AutoTickCountdownSeconds.Font = new Font("Segoe UI", 12F);
-            txtbx_AutoTickCountdownSeconds.Location = new Point(9, 53);
-            txtbx_AutoTickCountdownSeconds.Name = "txtbx_AutoTickCountdownSeconds";
-            txtbx_AutoTickCountdownSeconds.ReadOnly = true;
-            txtbx_AutoTickCountdownSeconds.Size = new Size(62, 29);
-            txtbx_AutoTickCountdownSeconds.TabIndex = 8;
-            txtbx_AutoTickCountdownSeconds.Text = "0";
-            txtbx_AutoTickCountdownSeconds.TextAlign = HorizontalAlignment.Center;
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new Point(15, 35);
-            label4.Name = "label4";
-            label4.Size = new Size(50, 15);
-            label4.TabIndex = 9;
-            label4.Text = "minutes";
-            // 
-            // txtbx_AutoTickCountdownMinutes
-            // 
-            txtbx_AutoTickCountdownMinutes.Font = new Font("Segoe UI", 12F);
-            txtbx_AutoTickCountdownMinutes.Location = new Point(9, 3);
-            txtbx_AutoTickCountdownMinutes.Name = "txtbx_AutoTickCountdownMinutes";
-            txtbx_AutoTickCountdownMinutes.ReadOnly = true;
-            txtbx_AutoTickCountdownMinutes.Size = new Size(62, 29);
-            txtbx_AutoTickCountdownMinutes.TabIndex = 7;
-            txtbx_AutoTickCountdownMinutes.Text = "0";
-            txtbx_AutoTickCountdownMinutes.TextAlign = HorizontalAlignment.Center;
-            // 
-            // txtbx_DkpBidderValue
-            // 
-            txtbx_DkpBidderValue.Location = new Point(364, 417);
-            txtbx_DkpBidderValue.Name = "txtbx_DkpBidderValue";
-            txtbx_DkpBidderValue.Size = new Size(59, 23);
-            txtbx_DkpBidderValue.TabIndex = 22;
-            // 
-            // dgv_LootWinners
-            // 
-            dgv_LootWinners.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgv_LootWinners.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
-            dgv_LootWinners.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgv_LootWinners.Location = new Point(6, 170);
-            dgv_LootWinners.MultiSelect = false;
-            dgv_LootWinners.Name = "dgv_LootWinners";
-            dgv_LootWinners.ReadOnly = true;
-            dgv_LootWinners.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgv_LootWinners.Size = new Size(418, 219);
-            dgv_LootWinners.TabIndex = 19;
-            dgv_LootWinners.CellClick += dgv_LootWinners_CellClick;
+            tabPage6.Controls.Add(panel4);
+            tabPage6.Controls.Add(dgv_RaidTicks);
+            tabPage6.Controls.Add(btn_RemoveRaidTick);
+            tabPage6.Controls.Add(btn_AddAutoTick);
+            tabPage6.Controls.Add(txtbx_AutoTickDkp);
+            tabPage6.Controls.Add(label12);
+            tabPage6.Controls.Add(label13);
+            tabPage6.Controls.Add(txtbx_AutoTickTimer);
+            tabPage6.Controls.Add(btn_StartAutoTickTimer);
+            tabPage6.Controls.Add(panel2);
+            tabPage6.Location = new Point(4, 27);
+            tabPage6.Name = "tabPage6";
+            tabPage6.Padding = new Padding(3);
+            tabPage6.Size = new Size(410, 409);
+            tabPage6.TabIndex = 0;
+            tabPage6.Text = "Raid Ticks";
+            tabPage6.UseVisualStyleBackColor = true;
             // 
             // panel4
             // 
@@ -387,9 +187,9 @@
             panel4.Controls.Add(txtbx_TickDkpValue);
             panel4.Controls.Add(label8);
             panel4.Controls.Add(btn_SubmitManualTick);
-            panel4.Location = new Point(6, 35);
+            panel4.Location = new Point(6, 7);
             panel4.Name = "panel4";
-            panel4.Size = new Size(330, 74);
+            panel4.Size = new Size(310, 74);
             panel4.TabIndex = 18;
             // 
             // label9
@@ -405,7 +205,7 @@
             // 
             txtbx_TickDescription.Location = new Point(80, 10);
             txtbx_TickDescription.Name = "txtbx_TickDescription";
-            txtbx_TickDescription.Size = new Size(245, 23);
+            txtbx_TickDescription.Size = new Size(210, 23);
             txtbx_TickDescription.TabIndex = 20;
             // 
             // txtbx_TickDkpValue
@@ -428,11 +228,279 @@
             // 
             btn_SubmitManualTick.Location = new Point(145, 39);
             btn_SubmitManualTick.Name = "btn_SubmitManualTick";
-            btn_SubmitManualTick.Size = new Size(180, 23);
+            btn_SubmitManualTick.Size = new Size(145, 23);
             btn_SubmitManualTick.TabIndex = 6;
             btn_SubmitManualTick.Text = "Add Tick Manually";
             btn_SubmitManualTick.UseVisualStyleBackColor = true;
             btn_SubmitManualTick.Click += btn_SubmitManualTick_Click;
+            // 
+            // dgv_RaidTicks
+            // 
+            dgv_RaidTicks.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgv_RaidTicks.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
+            dgv_RaidTicks.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgv_RaidTicks.Location = new Point(6, 144);
+            dgv_RaidTicks.MultiSelect = false;
+            dgv_RaidTicks.Name = "dgv_RaidTicks";
+            dgv_RaidTicks.ReadOnly = true;
+            dgv_RaidTicks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv_RaidTicks.Size = new Size(398, 230);
+            dgv_RaidTicks.TabIndex = 37;
+            // 
+            // btn_RemoveRaidTick
+            // 
+            btn_RemoveRaidTick.Location = new Point(6, 380);
+            btn_RemoveRaidTick.Name = "btn_RemoveRaidTick";
+            btn_RemoveRaidTick.Size = new Size(398, 23);
+            btn_RemoveRaidTick.TabIndex = 38;
+            btn_RemoveRaidTick.Text = "Remove";
+            btn_RemoveRaidTick.UseVisualStyleBackColor = true;
+            btn_RemoveRaidTick.Click += btn_RemoveRaidTick_Click;
+            // 
+            // btn_AddAutoTick
+            // 
+            btn_AddAutoTick.Location = new Point(6, 87);
+            btn_AddAutoTick.Name = "btn_AddAutoTick";
+            btn_AddAutoTick.Size = new Size(98, 51);
+            btn_AddAutoTick.TabIndex = 35;
+            btn_AddAutoTick.Text = "Add Auto Tick";
+            btn_AddAutoTick.UseVisualStyleBackColor = true;
+            btn_AddAutoTick.Click += btn_AddAutoTick_Click;
+            // 
+            // txtbx_AutoTickDkp
+            // 
+            txtbx_AutoTickDkp.Location = new Point(177, 88);
+            txtbx_AutoTickDkp.Name = "txtbx_AutoTickDkp";
+            txtbx_AutoTickDkp.Size = new Size(61, 23);
+            txtbx_AutoTickDkp.TabIndex = 30;
+            txtbx_AutoTickDkp.Text = "2";
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Location = new Point(138, 91);
+            label12.Name = "label12";
+            label12.Size = new Size(32, 15);
+            label12.TabIndex = 31;
+            label12.Text = "DKP:";
+            // 
+            // label13
+            // 
+            label13.AutoSize = true;
+            label13.Location = new Point(107, 119);
+            label13.Name = "label13";
+            label13.Size = new Size(64, 15);
+            label13.TabIndex = 34;
+            label13.Text = "Tick Timer:";
+            // 
+            // txtbx_AutoTickTimer
+            // 
+            txtbx_AutoTickTimer.Location = new Point(177, 115);
+            txtbx_AutoTickTimer.Name = "txtbx_AutoTickTimer";
+            txtbx_AutoTickTimer.Size = new Size(61, 23);
+            txtbx_AutoTickTimer.TabIndex = 33;
+            txtbx_AutoTickTimer.Text = "60";
+            // 
+            // btn_StartAutoTickTimer
+            // 
+            btn_StartAutoTickTimer.Location = new Point(241, 87);
+            btn_StartAutoTickTimer.Name = "btn_StartAutoTickTimer";
+            btn_StartAutoTickTimer.Size = new Size(75, 51);
+            btn_StartAutoTickTimer.TabIndex = 26;
+            btn_StartAutoTickTimer.Text = "Start Timer";
+            btn_StartAutoTickTimer.UseVisualStyleBackColor = true;
+            btn_StartAutoTickTimer.Click += btn_StartAutoTickTimer_Click;
+            // 
+            // panel2
+            // 
+            panel2.BorderStyle = BorderStyle.FixedSingle;
+            panel2.Controls.Add(label6);
+            panel2.Controls.Add(txtbx_AutoTickCountdownSeconds);
+            panel2.Controls.Add(label4);
+            panel2.Controls.Add(txtbx_AutoTickCountdownMinutes);
+            panel2.Location = new Point(322, 7);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(82, 131);
+            panel2.TabIndex = 10;
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(15, 101);
+            label6.Name = "label6";
+            label6.Size = new Size(50, 15);
+            label6.TabIndex = 10;
+            label6.Text = "seconds";
+            // 
+            // txtbx_AutoTickCountdownSeconds
+            // 
+            txtbx_AutoTickCountdownSeconds.Font = new Font("Segoe UI", 12F);
+            txtbx_AutoTickCountdownSeconds.Location = new Point(9, 69);
+            txtbx_AutoTickCountdownSeconds.Name = "txtbx_AutoTickCountdownSeconds";
+            txtbx_AutoTickCountdownSeconds.ReadOnly = true;
+            txtbx_AutoTickCountdownSeconds.Size = new Size(62, 29);
+            txtbx_AutoTickCountdownSeconds.TabIndex = 8;
+            txtbx_AutoTickCountdownSeconds.Text = "0";
+            txtbx_AutoTickCountdownSeconds.TextAlign = HorizontalAlignment.Center;
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(15, 42);
+            label4.Name = "label4";
+            label4.Size = new Size(50, 15);
+            label4.TabIndex = 9;
+            label4.Text = "minutes";
+            // 
+            // txtbx_AutoTickCountdownMinutes
+            // 
+            txtbx_AutoTickCountdownMinutes.Font = new Font("Segoe UI", 12F);
+            txtbx_AutoTickCountdownMinutes.Location = new Point(9, 10);
+            txtbx_AutoTickCountdownMinutes.Name = "txtbx_AutoTickCountdownMinutes";
+            txtbx_AutoTickCountdownMinutes.ReadOnly = true;
+            txtbx_AutoTickCountdownMinutes.Size = new Size(62, 29);
+            txtbx_AutoTickCountdownMinutes.TabIndex = 7;
+            txtbx_AutoTickCountdownMinutes.Text = "0";
+            txtbx_AutoTickCountdownMinutes.TextAlign = HorizontalAlignment.Center;
+            // 
+            // tabPage7
+            // 
+            tabPage7.Controls.Add(dgv_LootWinners);
+            tabPage7.Controls.Add(btn_ClearDkpWinner);
+            tabPage7.Controls.Add(btn_AddDkpWinner);
+            tabPage7.Controls.Add(btn_RemoveDkpWinner);
+            tabPage7.Controls.Add(txtbx_DkpBidderItem);
+            tabPage7.Controls.Add(txtbx_DkpBidderValue);
+            tabPage7.Controls.Add(label2);
+            tabPage7.Controls.Add(txtbx_DkpBidderName);
+            tabPage7.Controls.Add(label11);
+            tabPage7.Controls.Add(label7);
+            tabPage7.Location = new Point(4, 27);
+            tabPage7.Name = "tabPage7";
+            tabPage7.Padding = new Padding(3);
+            tabPage7.Size = new Size(410, 409);
+            tabPage7.TabIndex = 1;
+            tabPage7.Text = "Awarded Loot";
+            tabPage7.UseVisualStyleBackColor = true;
+            // 
+            // dgv_LootWinners
+            // 
+            dgv_LootWinners.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgv_LootWinners.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCellsExceptHeaders;
+            dgv_LootWinners.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgv_LootWinners.Location = new Point(6, 6);
+            dgv_LootWinners.MultiSelect = false;
+            dgv_LootWinners.Name = "dgv_LootWinners";
+            dgv_LootWinners.ReadOnly = true;
+            dgv_LootWinners.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv_LootWinners.Size = new Size(398, 324);
+            dgv_LootWinners.TabIndex = 19;
+            dgv_LootWinners.CellClick += dgv_LootWinners_CellClick;
+            // 
+            // btn_ClearDkpWinner
+            // 
+            btn_ClearDkpWinner.Location = new Point(274, 380);
+            btn_ClearDkpWinner.Name = "btn_ClearDkpWinner";
+            btn_ClearDkpWinner.Size = new Size(130, 23);
+            btn_ClearDkpWinner.TabIndex = 36;
+            btn_ClearDkpWinner.Text = "Clear Selection";
+            btn_ClearDkpWinner.UseVisualStyleBackColor = true;
+            btn_ClearDkpWinner.Click += btn_ClearDkpWinner_Click;
+            // 
+            // btn_AddDkpWinner
+            // 
+            btn_AddDkpWinner.Location = new Point(6, 380);
+            btn_AddDkpWinner.Name = "btn_AddDkpWinner";
+            btn_AddDkpWinner.Size = new Size(130, 23);
+            btn_AddDkpWinner.TabIndex = 23;
+            btn_AddDkpWinner.Text = "Add";
+            btn_AddDkpWinner.UseVisualStyleBackColor = true;
+            btn_AddDkpWinner.Click += btn_AddDkpWinner_Click;
+            // 
+            // btn_RemoveDkpWinner
+            // 
+            btn_RemoveDkpWinner.Location = new Point(140, 380);
+            btn_RemoveDkpWinner.Name = "btn_RemoveDkpWinner";
+            btn_RemoveDkpWinner.Size = new Size(130, 23);
+            btn_RemoveDkpWinner.TabIndex = 21;
+            btn_RemoveDkpWinner.Text = "Remove";
+            btn_RemoveDkpWinner.UseVisualStyleBackColor = true;
+            btn_RemoveDkpWinner.Click += btn_RemoveDkpWinner_Click;
+            // 
+            // txtbx_DkpBidderItem
+            // 
+            txtbx_DkpBidderItem.Location = new Point(132, 351);
+            txtbx_DkpBidderItem.Name = "txtbx_DkpBidderItem";
+            txtbx_DkpBidderItem.Size = new Size(222, 23);
+            txtbx_DkpBidderItem.TabIndex = 28;
+            // 
+            // txtbx_DkpBidderValue
+            // 
+            txtbx_DkpBidderValue.Location = new Point(360, 351);
+            txtbx_DkpBidderValue.Name = "txtbx_DkpBidderValue";
+            txtbx_DkpBidderValue.Size = new Size(46, 23);
+            txtbx_DkpBidderValue.TabIndex = 22;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(132, 333);
+            label2.Name = "label2";
+            label2.Size = new Size(31, 15);
+            label2.TabIndex = 29;
+            label2.Text = "Item";
+            // 
+            // txtbx_DkpBidderName
+            // 
+            txtbx_DkpBidderName.Location = new Point(3, 351);
+            txtbx_DkpBidderName.Name = "txtbx_DkpBidderName";
+            txtbx_DkpBidderName.Size = new Size(121, 23);
+            txtbx_DkpBidderName.TabIndex = 24;
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Location = new Point(3, 333);
+            label11.Name = "label11";
+            label11.Size = new Size(39, 15);
+            label11.TabIndex = 26;
+            label11.Text = "Player";
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(360, 333);
+            label7.Name = "label7";
+            label7.Size = new Size(28, 15);
+            label7.TabIndex = 25;
+            label7.Text = "Dkp";
+            // 
+            // btn_BossManagement
+            // 
+            btn_BossManagement.Location = new Point(6, 478);
+            btn_BossManagement.Name = "btn_BossManagement";
+            btn_BossManagement.Size = new Size(129, 24);
+            btn_BossManagement.TabIndex = 32;
+            btn_BossManagement.Text = "Boss Management";
+            btn_BossManagement.UseVisualStyleBackColor = true;
+            btn_BossManagement.Click += btn_RaidManagement_Click;
+            // 
+            // btn_SubmitRaid
+            // 
+            btn_SubmitRaid.Location = new Point(150, 479);
+            btn_SubmitRaid.Name = "btn_SubmitRaid";
+            btn_SubmitRaid.Size = new Size(274, 23);
+            btn_SubmitRaid.TabIndex = 27;
+            btn_SubmitRaid.Text = "Submit Raid";
+            btn_SubmitRaid.UseVisualStyleBackColor = true;
+            btn_SubmitRaid.Click += btn_SubmitRaid_Click;
+            // 
+            // txtbx_RaidName
+            // 
+            txtbx_RaidName.Location = new Point(83, 6);
+            txtbx_RaidName.Name = "txtbx_RaidName";
+            txtbx_RaidName.Size = new Size(337, 23);
+            txtbx_RaidName.TabIndex = 11;
             // 
             // tabPage1
             // 
@@ -646,16 +714,27 @@
             // 
             // trv_RaidDisplay
             // 
-            trv_RaidDisplay.Location = new Point(449, 12);
+            trv_RaidDisplay.Location = new Point(452, 12);
             trv_RaidDisplay.Name = "trv_RaidDisplay";
-            trv_RaidDisplay.Size = new Size(220, 566);
+            trv_RaidDisplay.Size = new Size(215, 532);
             trv_RaidDisplay.TabIndex = 9;
+            // 
+            // btn_RefreshCurrentRaid
+            // 
+            btn_RefreshCurrentRaid.Location = new Point(452, 554);
+            btn_RefreshCurrentRaid.Name = "btn_RefreshCurrentRaid";
+            btn_RefreshCurrentRaid.Size = new Size(215, 24);
+            btn_RefreshCurrentRaid.TabIndex = 10;
+            btn_RefreshCurrentRaid.Text = "Refresh Current Raid";
+            btn_RefreshCurrentRaid.UseVisualStyleBackColor = true;
+            btn_RefreshCurrentRaid.Click += btn_RefreshCurrentRaid_Click;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(670, 582);
+            ClientSize = new Size(677, 584);
+            Controls.Add(btn_RefreshCurrentRaid);
             Controls.Add(trv_RaidDisplay);
             Controls.Add(btn_Test);
             Controls.Add(btn_OpenSettings);
@@ -664,15 +743,22 @@
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "MainForm";
             Text = "Loot Goblin";
+            FormClosing += MainForm_FormClosing;
             Shown += MainForm_Shown;
             tabControl1.ResumeLayout(false);
             tabPage5.ResumeLayout(false);
             tabPage5.PerformLayout();
-            panel2.ResumeLayout(false);
-            panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)dgv_LootWinners).EndInit();
+            tabControl2.ResumeLayout(false);
+            tabPage6.ResumeLayout(false);
+            tabPage6.PerformLayout();
             panel4.ResumeLayout(false);
             panel4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_RaidTicks).EndInit();
+            panel2.ResumeLayout(false);
+            panel2.PerformLayout();
+            tabPage7.ResumeLayout(false);
+            tabPage7.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv_LootWinners).EndInit();
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
             tabPage2.ResumeLayout(false);
@@ -742,5 +828,11 @@
         private TextBox txtbx_AutoTickCountdownSeconds;
         private System.ComponentModel.BackgroundWorker AutoTickReminder;
         private TreeView trv_RaidDisplay;
+        private TabControl tabControl2;
+        private TabPage tabPage6;
+        private TabPage tabPage7;
+        private DataGridView dgv_RaidTicks;
+        private Button btn_RemoveRaidTick;
+        private Button btn_RefreshCurrentRaid;
     }
 }

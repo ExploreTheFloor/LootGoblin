@@ -27,6 +27,7 @@ namespace LootGoblin.Services
                 File.Copy(raidTickFile, $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}");
             }
 
+            ClearRaidTickFiles();
             return Task.CompletedTask;
         }
 
