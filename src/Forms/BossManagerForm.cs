@@ -1,5 +1,6 @@
 ﻿using LootGoblin.Structure;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace LootGoblin.Forms
 {
@@ -13,6 +14,7 @@ namespace LootGoblin.Forms
 
         private void btn_AddOrEditBossDkpValue_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_AddOrEditBossDkpValue_Click)}]");
             if (MainForm.BossValues != null && MainForm.BossValues.Any(x => x.Name == txtbx_BossName.Text))
                 return;
             var dkpValue = int.TryParse(txtbx_BossDkpValue.Text, out var dkpResult);
@@ -25,6 +27,7 @@ namespace LootGoblin.Forms
 
         private void btn_RemoveBossDkpValue_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_RemoveBossDkpValue_Click)}]");
             if (string.IsNullOrEmpty(txtbx_BossName.Text) || string.IsNullOrEmpty(txtbx_BossDkpValue.Text))
                 return;
             if (MainForm.BossValues != null)
@@ -39,12 +42,14 @@ namespace LootGoblin.Forms
 
         private void ClearValues()
         {
+            Log.Debug($"[{nameof(ClearValues)}]");
             txtbx_BossName.Text = "";
             txtbx_BossDkpValue.Text = "";
         }
 
         private void dgv_BossDkpValues_CellClick(object sender, DataGridViewCellEventArgs e)
         {
+            Log.Debug($"[{nameof(dgv_BossDkpValues_CellClick)}]");
             if (e.RowIndex < 0)
             {
                 return;
@@ -57,6 +62,7 @@ namespace LootGoblin.Forms
 
         private void SaveBossManagement()
         {
+            Log.Debug($"[{nameof(SaveBossManagement)}]");
             var fileName = $@"{AppDomain.CurrentDomain.BaseDirectory}Settings\BossManagement.json";
             var jsonString = JsonConvert.SerializeObject(MainForm.BossValues);
             File.WriteAllText(fileName, jsonString);

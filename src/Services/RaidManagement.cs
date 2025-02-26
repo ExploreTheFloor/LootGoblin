@@ -35,6 +35,7 @@ namespace LootGoblin.Services
         {
             Log.Debug($"[{nameof(ClearRaidTickFiles)}]");
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
+            if (eqDir == null) return Task.CompletedTask;
             var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
             var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
             foreach (var raidTickFile in raidTickFiles)

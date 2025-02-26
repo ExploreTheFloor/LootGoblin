@@ -67,6 +67,7 @@ namespace LootGoblin.Forms
 
         private void BindObjectToTreeView(object? obj, TreeView treeView)
         {
+            Log.Debug($"[{nameof(BindObjectToTreeView)}]");
             // Ensure modifications to TreeView are done on the UI thread
             if (treeView.InvokeRequired)
             {
@@ -90,12 +91,13 @@ namespace LootGoblin.Forms
 
         private void UpdateRaidInformation()
         {
+            Log.Debug($"[{nameof(UpdateRaidInformation)}]");
             BindObjectToTreeView(CurrentRaid, trv_RaidDisplay);
         }
 
         private void SaveCurrentRaid()
         {
-
+            Log.Debug($"[{nameof(SaveCurrentRaid)}]");
             var fileName =
                 $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
             var jsonString = JsonConvert.SerializeObject(CurrentRaid);
@@ -104,6 +106,7 @@ namespace LootGoblin.Forms
 
         private void AddObjectPropertiesToTreeView(object? obj, TreeNode parentNode, string parentPropertyName = "")
         {
+            Log.Debug($"[{nameof(AddObjectPropertiesToTreeView)}]");
             // If the object is null, return
             if (obj == null) return;
 
@@ -191,28 +194,32 @@ namespace LootGoblin.Forms
 
         private string ItemToLinkFromId(int itemId)
         {
+            Log.Debug($"[{nameof(GetItemNameFromId)}] {itemId}");
             Clipboard.SetText("\u0012" + $"00{itemId} {GetItemNameFromId(itemId)}" + "\u0012");
             return "\u0012" + $"{itemId} {GetItemNameFromId(itemId)}" + "\u0012";
         }
 
         private string ItemToLinkFromName(string itemName)
         {
+            Log.Debug($"[{nameof(GetItemNameFromId)}] {itemName}");
             return "\u0012" + $"00{GetItemIdFromName(itemName)} {itemName}" + "\u0012";
         }
 
         private int GetItemIdFromName(string itemName)
         {
+            Log.Debug($"[{nameof(GetItemNameFromId)}] {itemName}");
             return _itemDictionary != null ? _itemDictionary.FirstOrDefault(x => x.Value == itemName).Key : 0;
         }
 
         private string GetItemNameFromId(int itemId)
         {
+            Log.Debug($"[{nameof(GetItemNameFromId)}] {itemId}");
             return _itemDictionary != null ? _itemDictionary.FirstOrDefault(x => x.Key == itemId).Value : "";
         }
 
-        IEnumerable<System.Windows.Forms.TreeNode> Collect(TreeNodeCollection nodes)
+        IEnumerable<TreeNode> Collect(TreeNodeCollection nodes)
         {
-            return nodes.Cast<System.Windows.Forms.TreeNode>();
+            return nodes.Cast<TreeNode>();
         }
 
         #region ParseMessages
@@ -424,6 +431,7 @@ namespace LootGoblin.Forms
 
         private async Task UpdateDkpBid(string itemName, string biddersName, string bidAmount, string bidType)
         {
+            Log.Debug($"[{nameof(UpdateDkpBid)}]");
             if (trv_DkpBids.InvokeRequired)
             {
                 trv_DkpBids.BeginInvoke(delegate
@@ -452,7 +460,7 @@ namespace LootGoblin.Forms
                     }).Distinct().ToList();
 
                 var foundItemName = Collect(trv_DkpBids.Nodes).FirstOrDefault(x => x.Text == itemName);
-                var newTreeNodeText = new System.Windows.Forms.TreeNode($"{bidAmount} | {biddersName} | {bidType}");
+                var newTreeNodeText = new TreeNode($"{bidAmount} | {biddersName} | {bidType}");
 
                 if (foundDuplicateItems.Any())
                 {
@@ -483,7 +491,7 @@ namespace LootGoblin.Forms
                 }
                 else
                 {
-                    var item = new System.Windows.Forms.TreeNode(itemName);
+                    var item = new TreeNode(itemName);
                     item.Nodes.Add(newTreeNodeText);
                     trv_DkpBids.Nodes.Add(item);
                 }
@@ -500,6 +508,7 @@ namespace LootGoblin.Forms
 
         private async Task AddBidderToCharacterItemList(string biddersName)
         {
+            Log.Debug($"[{nameof(AddBidderToCharacterItemList)}] {biddersName}");
             try
             {
                 Log.Debug($"[{nameof(AddBidderToCharacterItemList)}] Player: {biddersName}");
@@ -601,6 +610,7 @@ namespace LootGoblin.Forms
 
         public Task UpdateCharacterList(string playerName)
         {
+            Log.Debug($"[{nameof(UpdateCharacterList)}] {playerName}");
             if (trv_CharacterList.InvokeRequired)
             {
                 trv_CharacterList.BeginInvoke(delegate { UpdateCharacterList(playerName); });
@@ -627,7 +637,7 @@ namespace LootGoblin.Forms
 
                     trv_CharacterList.BeginUpdate();
                     var parentCharacter =
-                        new System.Windows.Forms.TreeNode(
+                        new TreeNode(
                             $"{parentBidder.Character.Name} | {parentBidder.Character.Class}");
 
                     foreach (var characterItem in parentBidder.CharacterItems)
@@ -635,21 +645,21 @@ namespace LootGoblin.Forms
                         Log.Debug(
                             $"[{nameof(UpdateCharacterList)}] Adding Item: {characterItem.ItemName} to [Parent]:{parentBidder.Character.Name}");
                         parentCharacter.Nodes.Add(
-                            new System.Windows.Forms.TreeNode(
+                            new TreeNode(
                                 $"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                     }
 
                     foreach (var linkedCharacter in linkedCharacters)
                     {
                         var childCharacter =
-                            new System.Windows.Forms.TreeNode(
+                            new TreeNode(
                                 $"{linkedCharacter.Character.Name} | {linkedCharacter.Character.Class}");
                         foreach (var characterItem in linkedCharacter.CharacterItems)
                         {
                             Log.Debug(
                                 $"[{nameof(UpdateCharacterList)}] Adding Item: {characterItem.ItemName} to [Linked]:{linkedCharacter.Character.Name}");
                             childCharacter.Nodes.Add(
-                                new System.Windows.Forms.TreeNode(
+                                new TreeNode(
                                     $"{characterItem.ItemName} | {characterItem.Date.ToShortDateString()}"));
                         }
 
@@ -679,6 +689,7 @@ namespace LootGoblin.Forms
 
         private async Task ParseLootRolls(string messageToProcess)
         {
+            Log.Debug($"[{nameof(ParseLootRolls)}] {messageToProcess}");
             if (!messageToProcess.Contains("**"))
                 return;
             try
@@ -708,6 +719,7 @@ namespace LootGoblin.Forms
 
         public Task UpdateLootRolls(string rollRange, string playerName, string playerRoll)
         {
+            Log.Debug($"[{nameof(UpdateLootRolls)}] {rollRange} {playerName} {playerRoll}");
             if (trv_LootRolls.InvokeRequired)
             {
                 trv_LootRolls.BeginInvoke(delegate { UpdateLootRolls(rollRange, playerName, playerRoll); });
@@ -764,6 +776,7 @@ namespace LootGoblin.Forms
 
         public async Task ParseLootedItems(string messageToProcess)
         {
+            Log.Debug($"[{nameof(ParseLootedItems)}] {messageToProcess}");
             if (!messageToProcess.Contains("] --") && !messageToProcess.Contains("has looted a"))
                 return;
             Log.Information($"[{nameof(ParseLootRolls)}] {messageToProcess}");
@@ -785,6 +798,7 @@ namespace LootGoblin.Forms
 
         public Task UpdateLootedItems(string playerName, string lootedItem)
         {
+            Log.Debug($"[{nameof(UpdateLootedItems)}] {playerName} {lootedItem}");
             try
             {
                 if (dgv_LootedItems.InvokeRequired)
@@ -809,6 +823,7 @@ namespace LootGoblin.Forms
 
         private Task Test()
         {
+            Log.Debug($"[{nameof(Test)}]");
             var rand = new Random();
 
             #region Kill Message
@@ -941,6 +956,7 @@ namespace LootGoblin.Forms
 
         private void UpdateTicksTest()
         {
+            Log.Debug($"[{nameof(UpdateTicksTest)}]");
             if (dgv_RaidTicks.InvokeRequired)
             {
                 dgv_RaidTicks.BeginInvoke(delegate { UpdateTicksTest(); });
@@ -989,6 +1005,7 @@ namespace LootGoblin.Forms
 
         private void RefreshDataGridView(DataGridView dgv)
         {
+            Log.Debug($"[{nameof(RefreshDataGridView)}]");
             if (dgv.InvokeRequired)
             {
                 dgv.BeginInvoke(delegate { RefreshDataGridView(dgv); });
@@ -1001,7 +1018,7 @@ namespace LootGoblin.Forms
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
-
+            Log.Debug($"[{nameof(MainForm_Shown)}]");
             if (string.IsNullOrEmpty(LootGoblin.Default.Client) ||
                 string.IsNullOrEmpty(LootGoblin.Default.Host) ||
                 string.IsNullOrEmpty(LootGoblin.Default.LogLocation) ||
@@ -1025,6 +1042,7 @@ namespace LootGoblin.Forms
 
         private void btn_DuplicateLoot_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_DuplicateLoot_Click)}]");
             Task.Run(async () =>
             {
                 try
@@ -1046,6 +1064,7 @@ namespace LootGoblin.Forms
 
         public Task UpdateDupeLoot(BindingList<GridViewItemDuplicate> dupeLootSource)
         {
+            Log.Debug($"[{nameof(UpdateDupeLoot)}]");
             if (trv_LootRolls.InvokeRequired)
             {
                 trv_LootRolls.BeginInvoke(delegate { UpdateDupeLoot(dupeLootSource); });
@@ -1059,6 +1078,7 @@ namespace LootGoblin.Forms
 
         public void UpdateTextBoxForegroundColor(TextBox textBox, Color color)
         {
+            Log.Debug($"[{nameof(UpdateTextBoxForegroundColor)}]");
             if (textBox.InvokeRequired)
             {
                 textBox.BeginInvoke(delegate { UpdateTextBoxForegroundColor(textBox, color); });
@@ -1070,6 +1090,7 @@ namespace LootGoblin.Forms
 
         public void UpdateTextBoxBackgroundColor(TextBox textBox, Color color)
         {
+            Log.Debug($"[{nameof(UpdateTextBoxBackgroundColor)}]");
             if (textBox.InvokeRequired)
             {
                 textBox.BeginInvoke(delegate { UpdateTextBoxBackgroundColor(textBox, color); });
@@ -1081,6 +1102,7 @@ namespace LootGoblin.Forms
 
         private string GetTextBoxText(TextBox textBox)
         {
+            Log.Debug($"[{nameof(GetTextBoxText)}]");
             if (!textBox.InvokeRequired)
             {
                 return textBox.Text;
@@ -1095,6 +1117,7 @@ namespace LootGoblin.Forms
 
         private void btn_RaidManagement_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_RaidManagement_Click)}]");
             if (!_bossManagerFormShown)
             {
                 _bossManagerFormShown = true;
@@ -1112,16 +1135,19 @@ namespace LootGoblin.Forms
 
         private void btn_ClearDkpBids_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_ClearDkpBids_Click)}]");
             trv_DkpBids.Nodes.Clear();
         }
 
         private void btn_ClearLootRolls_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_ClearLootRolls_Click)}]");
             trv_LootRolls.Nodes.Clear();
         }
 
         private void btn_ClearLootedItems_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_ClearLootedItems_Click)}]");
             dgv_LootedItems.Rows.Clear();
         }
 
@@ -1129,6 +1155,7 @@ namespace LootGoblin.Forms
 
         private void btn_OpenSettings_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_OpenSettings_Click)}]");
             if (!_isSettingsFormShown)
             {
                 _isSettingsFormShown = true;
@@ -1145,11 +1172,13 @@ namespace LootGoblin.Forms
 
         private void btn_Test_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_Test_Click)}]");
             Task.Run(() => Task.FromResult(Test()));
         }
 
         private void trv_DkpBids_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
+            Log.Debug($"[{nameof(trv_DkpBids_NodeMouseClick)}]");
             try
             {
                 if (!e.Node.Text.Contains(" | "))
@@ -1175,6 +1204,7 @@ namespace LootGoblin.Forms
 
         public Task UpdateCharacterDkp(double currentDkp)
         {
+            Log.Debug($"[{nameof(UpdateCharacterDkp)}] Dkp: {currentDkp}");
             try
             {
                 if (lbl_CurrentDkp.InvokeRequired)
@@ -1195,6 +1225,7 @@ namespace LootGoblin.Forms
 
         private void btn_SubmitManualTick_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_SubmitManualTick_Click)}]");
             Task.Run(async () =>
             {
                 var raidManagement = new RaidManagement();
@@ -1235,6 +1266,7 @@ namespace LootGoblin.Forms
 
         private void btn_AddAutoTick_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_AddAutoTick_Click)}]");
             Task.Run(async () =>
             {
                 var raidManagement = new RaidManagement();
@@ -1266,6 +1298,7 @@ namespace LootGoblin.Forms
         {
             try
             {
+                Log.Debug($"[{nameof(btn_StartAutoTickTimer_Click)}]");
                 //Cancel the Reminder if it is running
                 if (AutoTickReminder.IsBusy)
                 {
@@ -1316,7 +1349,7 @@ namespace LootGoblin.Forms
                 }
                 else
                 {
-                    this.BringToFront();
+                    BringToFront();
                     RaidTickTimer.Stop();
                     Task.Run(() =>
                     {
@@ -1360,6 +1393,7 @@ namespace LootGoblin.Forms
 
         private void btn_SubmitRaid_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_SubmitRaid_Click)}]");
             CurrentRaid.Name = txtbx_RaidName.Text;
             CurrentRaid.Timestamp = DateTime.Now.ToString("MM-dd-yyyyTHH:mm:ss.fffZ");
             CurrentRaid.Pool = new Pool
@@ -1387,6 +1421,7 @@ namespace LootGoblin.Forms
 
         private void dgv_LootWinners_CellClick(object sender, DataGridViewCellEventArgs e)
         {
+            Log.Debug($"[{nameof(dgv_LootWinners_CellClick)}]");
             if (e.RowIndex < 0)
             {
                 return;
@@ -1401,6 +1436,7 @@ namespace LootGoblin.Forms
 
         private void btn_ClearDkpWinner_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_ClearDkpWinner_Click)}]");
             txtbx_DkpBidderName.Text = string.Empty;
             txtbx_DkpBidderValue.Text = string.Empty;
             txtbx_DkpBidderItem.Text = string.Empty;
@@ -1408,6 +1444,7 @@ namespace LootGoblin.Forms
 
         private void btn_RemoveDkpWinner_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_RemoveDkpWinner_Click)}]");
             var dkpWinner = _dkpWinners.FirstOrDefault(x =>
                 x.Player == txtbx_DkpBidderName.Text &&
                 x.Bid == Convert.ToInt32(txtbx_DkpBidderValue.Text) &&
@@ -1426,6 +1463,7 @@ namespace LootGoblin.Forms
 
         private void btn_AddDkpWinner_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_AddDkpWinner_Click)}]");
             var dkpWinner = new DkpWinner(txtbx_DkpBidderName.Text, Convert.ToInt32(txtbx_DkpBidderValue.Text),
                 txtbx_DkpBidderItem.Text);
             _dkpWinners.Add(dkpWinner);
@@ -1446,6 +1484,7 @@ namespace LootGoblin.Forms
 
         private void btn_LogMonitor_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_LogMonitor_Click)}]");
             if (string.IsNullOrEmpty(LootGoblin.Default.LogLocation))
             {
                 MessageBox.Show(@"Please set the raid name.");
@@ -1479,11 +1518,13 @@ namespace LootGoblin.Forms
 
         private void btn_RefreshCurrentRaid_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_RefreshCurrentRaid_Click)}]");
             UpdateRaidInformation();
         }
 
         private void btn_RemoveRaidTick_Click(object sender, EventArgs e)
         {
+            Log.Debug($"[{nameof(btn_RemoveRaidTick_Click)}]");
             var raidTick = _raidTicks.FirstOrDefault(x => x.Description == dgv_RaidTicks.SelectedRows[0].Cells[0].Value.ToString());
             if (raidTick != null)
                 _raidTicks.Remove(raidTick);
@@ -1498,6 +1539,7 @@ namespace LootGoblin.Forms
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            Log.Debug($"[{nameof(MainForm_FormClosing)}]");
             SaveCurrentRaid();
         }
     }
