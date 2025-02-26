@@ -98,10 +98,22 @@ namespace LootGoblin.Forms
         private void SaveCurrentRaid()
         {
             Log.Debug($"[{nameof(SaveCurrentRaid)}]");
-            var fileName =
-                $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
-            var jsonString = JsonConvert.SerializeObject(CurrentRaid);
-            File.WriteAllText(fileName, jsonString);
+            if (CurrentRaid.Ticks.Any() || CurrentRaid.Items.Any())
+            {
+                var result = MessageBox.Show("Would you like to save a copy of the Current Raid?",
+                    "Confirmation", MessageBoxButtons.YesNo);
+                switch (result)
+                {
+                    case DialogResult.Yes:
+                        var fileName =
+                            $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
+                        var jsonString = JsonConvert.SerializeObject(CurrentRaid);
+                        File.WriteAllText(fileName, jsonString);
+                        break;
+                    case DialogResult.No:
+                        break;
+                }
+            }
         }
 
         private void AddObjectPropertiesToTreeView(object? obj, TreeNode parentNode, string parentPropertyName = "")

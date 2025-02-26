@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using LootGoblin.Structure;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace LootGoblin.Services
 {
@@ -17,6 +18,7 @@ namespace LootGoblin.Services
         {
             public async Task RaidInsert(CurrentRaid currentRaid)
             {
+                Log.Debug($"[{nameof(RaidInsert)}]");
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Put, "https://{{host}}/clients/{{client}}/raids");
 
@@ -29,6 +31,7 @@ namespace LootGoblin.Services
     }
         public async Task<AuthenticationResult?> GetBearerToken()
         {
+            Log.Debug($"[{nameof(GetBearerToken)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Post, "https://cognito-idp.us-east-2.amazonaws.com/");
             request.Headers.Add("X-Amz-Target", "AWSCognitoIdentityProviderService.InitiateAuth");
@@ -52,27 +55,30 @@ namespace LootGoblin.Services
             return authenticationResponse?.AuthenticationResult;
         }
 
-        public async Task<List<Character>?> GetCharacters(bool includeInactive = false)
+        public async Task<List<Character>> GetCharacters(bool includeInactive = false)
         {
+            Log.Debug($"[{nameof(GetCharacters)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/characters?IncludeInactives={includeInactive}");
             request.Headers.Add("Authorization", AuthenticationResult?.AccessToken);
             var response = await client.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            return JsonConvert.DeserializeObject<List<Character>>(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<List<Character>>(await response.Content.ReadAsStringAsync()) ?? new List<Character>();
         }
 
-        public async Task<Character?> GetCharacterById(int id)
+        public async Task<Character> GetCharacterById(int id)
         {
+            Log.Debug($"[{nameof(GetCharacterById)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/characters/{id}");
             var response = await client.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            return JsonConvert.DeserializeObject<Character>(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<Character>(await response.Content.ReadAsStringAsync()) ?? new Character();
         }
 
         public async Task<List<CharacterDkp>?> GetCharacterDkp(int id)
         {
+            Log.Debug($"[{nameof(GetCharacterDkp)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/characters/{id}/dkp");
             var response = await client.SendAsync(request).ConfigureAwait(false);
@@ -82,6 +88,7 @@ namespace LootGoblin.Services
 
         public async Task<DKPSummary> GetDKPSummary()
         {
+            Log.Debug($"[{nameof(GetDKPSummary)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/dkp");
             var response = await client.SendAsync(request).ConfigureAwait(false);
@@ -91,6 +98,7 @@ namespace LootGoblin.Services
 
         public async Task<CharacterLinks?> GetLinkedCharacters(int id)
         {
+            Log.Debug($"[{nameof(GetLinkedCharacters)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/characters/links/{id}");
             request.Headers.Add("Authorization", AuthenticationResult?.AccessToken);
@@ -101,6 +109,7 @@ namespace LootGoblin.Services
 
         public async Task<List<CharacterItem>?> GetCharacterItems(int id)
         {
+            Log.Debug($"[{nameof(GetCharacterItems)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/characters/{id}/items");
             var response = await client.SendAsync(request).ConfigureAwait(false);
@@ -112,6 +121,7 @@ namespace LootGoblin.Services
         {
             try
             {
+                Log.Debug($"[{nameof(SubmitRaid)}]");
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Put, $"https://{LootGoblin.Default.Host}/clients/{LootGoblin.Default.Client}/raids");
                 request.Headers.Add("Authorization", AuthenticationResult?.AccessToken);
@@ -124,7 +134,6 @@ namespace LootGoblin.Services
             catch (Exception e)
             {
                 Debug.WriteLine(e);
-                throw;
             }
         }
     }
