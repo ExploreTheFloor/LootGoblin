@@ -133,7 +133,7 @@ namespace LootGoblin.Services
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e);
+                Log.Error($"[{nameof(GetCharacterItems)}] {e.InnerException}");
             }
         }
     }

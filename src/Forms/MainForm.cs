@@ -11,6 +11,7 @@ using Log = Serilog.Log;
 using Microsoft.Toolkit.Uwp.Notifications;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Reflection;
+using System.Runtime.Intrinsics.Arm;
 
 namespace LootGoblin.Forms
 {
@@ -327,23 +328,16 @@ namespace LootGoblin.Forms
                 return;
             }
 
-            if (_characters != null)
-            {
-                var characters = raidAttendance.Select(x => x.Player).ToList();
+            var characters = raidAttendance.Select(x => x.Player).ToList();
 
-                var autoTick = new Tick
-                {
-                    Characters = characters,
-                    Description = $"{txtbx_RaidName.Text} - Kill: {nameOfKill}",
-                    Value = foundBoss.Dkp.ToString()
-                };
-                CurrentRaid.Ticks.Add(autoTick);
-            }
-            else
+            var bossKillTick = new Tick
             {
-                MessageBox.Show(
-                    @"Unable to locate characters for Raid Attendance.  Please type /output RaidList in game.");
-            }
+                Characters = characters,
+                Description = $"{txtbx_RaidName.Text} - Kill: {nameOfKill}",
+                Value = foundBoss.Dkp.ToString()
+            };
+            CurrentRaid.Ticks.Add(bossKillTick);
+            _raidTicks.Add(bossKillTick);
         }
 
         private async Task ParseAwardedLoot(string messageToProcess)
@@ -840,7 +834,9 @@ namespace LootGoblin.Forms
 
             #region Kill Message
 
-            //MessageMonitor("Druzzil Ro tells the guild, 'Remorse of Savage> has killed a dracoliche in Plane of Fear Instanced !'");
+            MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test in Plane of Fear Instanced !'");
+            //MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test1 in Plane of Fear Instanced !'");
+            //MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test2 in Plane of Fear Instanced !'");
 
             #endregion Kill Message
 

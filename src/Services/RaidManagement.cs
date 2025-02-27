@@ -12,22 +12,29 @@ namespace LootGoblin.Services
 
         public Task BackUpRaidTickFiles()
         {
-            Log.Debug($"[{nameof(BackUpRaidTickFiles)}]");
-            var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
-            if (eqDir == null)
+            try
             {
-                Log.Warning($"[{nameof(BackUpRaidTickFiles)}] Unable to locate Raid Tick file: {eqDir}.");
-                return Task.CompletedTask;
-            }
-            var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
-            var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
-            foreach (var raidTickFile in raidTickFiles)
-            {
-                Log.Debug($"Copying: {raidTickFile} to {AppDomain.CurrentDomain.BaseDirectory}\\BackUp\\{DateTime.Now.ToShortDateString().Replace("/", "-")}\\{Path.GetFileName(raidTickFile)}");
-                File.Copy(raidTickFile, $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}");
-            }
+                Log.Debug($"[{nameof(BackUpRaidTickFiles)}]");
+                var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
+                if (eqDir == null)
+                {
+                    Log.Warning($"[{nameof(BackUpRaidTickFiles)}] Unable to locate Raid Tick file: {eqDir}.");
+                    return Task.CompletedTask;
+                }
+                var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
+                var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
+                foreach (var raidTickFile in raidTickFiles)
+                {
+                    Log.Debug($"Copying: {raidTickFile} to {AppDomain.CurrentDomain.BaseDirectory}\\BackUp\\{DateTime.Now.ToShortDateString().Replace("/", "-")}\\{Path.GetFileName(raidTickFile)}");
+                    File.Copy(raidTickFile, $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}", true);
+                }
 
-            ClearRaidTickFiles();
+                ClearRaidTickFiles();
+            }
+            catch (Exception e)
+            {
+                Log.Error($"[{nameof(BackUpRaidTickFiles)}] {e.InnerException}");
+            }
             return Task.CompletedTask;
         }
 
