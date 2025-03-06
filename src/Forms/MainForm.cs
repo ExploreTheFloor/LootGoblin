@@ -271,10 +271,13 @@ namespace LootGoblin.Forms
                 });
                 return;
             }
-            //$"Mains Roll {randomNumberString} | Alts Roll {Convert.ToInt32(randomNumberString) - 1} for: ")
+            
             if (messageToProcess.Contains("Mains Roll") && messageToProcess.Contains("Alts Roll"))
             {
-
+                Task.Run(async () =>
+                {
+                    await ParseLootRollAnnouncement(messageToProcess);
+                });
             }
             if (messageToProcess.Contains("**"))
             {
@@ -708,11 +711,27 @@ namespace LootGoblin.Forms
 
         private async Task ParseLootRollAnnouncement(string messageToProcess)
         {
+            if (trv_LootRolls.InvokeRequired)
+            {
+                trv_LootRolls.BeginInvoke(delegate { ParseLootRollAnnouncement(messageToProcess); });
+                return;
+            }
+            //$"Mains Roll {randomNumberString} | Alts Roll {Convert.ToInt32(randomNumberString) - 1} for: ")
             Log.Debug($"[{nameof(ParseLootRollAnnouncement)}] {messageToProcess}");
-            messageToProcess = messageToProcess.RemoveLastCharacter();
-            var trimmedMessage = messageToProcess[64..];
-
-
+            var initialSplitMessage = messageToProcess.Split(',')[1];
+            var splitMessage = initialSplitMessage
+                .Replace("Mains Roll ", "")
+                .Replace("| Alts Roll ", "")
+                .Replace("for: ", "").Split(" ");
+            var mainRoll = Convert.ToInt32(splitMessage[2]);
+            var altRoll = Convert.ToInt32(splitMessage[3]);
+            var itemName = initialSplitMessage.Split(":")[1];
+            var foundRollRange = Collect(trv_LootRolls.Nodes).FirstOrDefault(x => x.Text.Contains(mainRoll.ToString()));
+            if (foundRollRange == null)
+            {
+                trv_LootRolls.Nodes.Add($"{itemName} | Main | {mainRoll}");
+                trv_LootRolls.Nodes.Add($"{itemName} | Alt | {altRoll}");
+            }
         }
         private async Task ParseLootRolls(string messageToProcess)
         {
@@ -756,7 +775,7 @@ namespace LootGoblin.Forms
                     $"[{nameof(UpdateLootRolls)}] Player: {playerName} | Range: {rollRange} | Roll: {playerRoll}");
                 trv_LootRolls.BeginUpdate();
                 var newTreeNodeText = $"{playerRoll} | {playerName}";
-                var foundRollRange = Collect(trv_LootRolls.Nodes).FirstOrDefault(x => x.Text == rollRange);
+                var foundRollRange = Collect(trv_LootRolls.Nodes).FirstOrDefault(x => x.Text.Split(" | ")[2] == rollRange.Split(" ")[2]);
 
                 if (foundRollRange != null)
                 {
@@ -780,7 +799,9 @@ namespace LootGoblin.Forms
                 }
                 else
                 {
-                    trv_LootRolls.Nodes.Add(rollRange).Nodes.Add(newTreeNodeText);
+                    Log.Information(
+                        $"[{nameof(ParseLootRolls)}] Unable to find Range: {rollRange}.");
+                    return Task.CompletedTask;
                 }
 
                 Log.Information(
@@ -875,92 +896,99 @@ namespace LootGoblin.Forms
             AwardLootTest();
             #endregion Awarded Loot
 
-            #region Bids
+            //#region Bids
 
-            MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(1, 100)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 100)} alt'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:58:55 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 200)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:58:58 2024] Splodies's eyes glow violet.");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:58:59 2024] Cyrano tells the raid,  'Crown of Rile {rand.Next(1, 100)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:02 2024] Karbin tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:02 2024] Broby tells the raid,  'Crown of Rile {rand.Next(100, 520)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:02 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(100, 200)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:03 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(100, 200)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:02 2024] Broby tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:02 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:03 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:15 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(300, 500)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(200, 300)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:24 2024] Dookii tells the raid,  'Crown of Rile {rand.Next(300, 500)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:24 2024] Booshsoaker tells the raid,  'Robe of the Azure Sky {rand.Next(200, 300)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"Mon Nov 25 21:59:24 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 30)} alt'");
-            Thread.Sleep(1000);
-            MessageMonitor(
-                $"[Mon Nov 25 21:59:33 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:34 2024] Adann tells the raid,  'Oom afk'");
-            Thread.Sleep(1000);
-            MessageMonitor($"[Mon Nov 25 21:59:35 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
+            //MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(1, 100)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 100)} alt'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:58:55 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(100, 200)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:58:58 2024] Splodies's eyes glow violet.");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:58:59 2024] Cyrano tells the raid,  'Crown of Rile {rand.Next(1, 100)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:02 2024] Karbin tells the raid,  'Robe of the Azure Sky {rand.Next(1, 100)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:02 2024] Broby tells the raid,  'Crown of Rile {rand.Next(100, 520)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:02 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(100, 200)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:03 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(100, 200)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:02 2024] Broby tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:02 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:03 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(200, 500)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:04 2024] Zibb tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:15 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(300, 500)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:15 2024] Leetbeat tells the raid,  'Robe of the Azure Sky {rand.Next(200, 300)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:18 2024] Shiroe tells the raid,  'Yunnb's Earring {rand.Next(200, 300)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:24 2024] Dookii tells the raid,  'Crown of Rile {rand.Next(300, 500)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:24 2024] Booshsoaker tells the raid,  'Robe of the Azure Sky {rand.Next(200, 300)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"Mon Nov 25 21:59:24 2024] Xarszx tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:28 2024] Gustuv tells the raid,  'Katana of Flowing Water {rand.Next(1, 30)} alt'");
+            //Thread.Sleep(1000);
+            //MessageMonitor(
+            //    $"[Mon Nov 25 21:59:33 2024] Ibekickin tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:34 2024] Adann tells the raid,  'Oom afk'");
+            //Thread.Sleep(1000);
+            //MessageMonitor($"[Mon Nov 25 21:59:35 2024] Thebob tells the raid,  'Crown of Rile {rand.Next(400, 500)}'");
 
-            #endregion Bids
+            //#endregion Bids
 
             #region Rolls
-
+            MessageMonitor($"[Mon Nov 25 21:59:28 2024] You tell the raid,  Mains Roll 444 | Alts Roll {Convert.ToInt32("444") - 1} for: Test1 Item");
+            MessageMonitor($"[Mon Nov 25 21:59:28 2024] You tell the raid,  Mains Roll 333 | Alts Roll {Convert.ToInt32("333") - 1} for: Test2 Item");
+            Thread.Sleep(1000);
             MessageMonitor($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by Lenna.");
             MessageMonitor(
                 $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 333, but this time it turned up a 329.");
+
             MessageMonitor($"[Mon Jan 06 20:41:47 2025] **A Magic Die is rolled by Larrmada.");
             MessageMonitor(
                 $"[Mon Jan 06 20:41:47 2025] **It could have been any number from 0 to 444, but this time it turned up a 108.");
+
             MessageMonitor($"[Mon Jan 06 20:41:44 2025] **A Magic Die is rolled by Skallagrimsson.");
             MessageMonitor(
                 $"[Mon Jan 06 20:41:44 2025] **It could have been any number from 0 to 444, but this time it turned up a 167.");
+
             MessageMonitor($"[Mon Jan 06 20:41:43 2025] **A Magic Die is rolled by Gaff.");
             MessageMonitor(
                 $"[Mon Jan 06 20:41:43 2025] **It could have been any number from 0 to 333, but this time it turned up a 88.");
+
             MessageMonitor($"[Tue Jan 07 20:43:34 2025] **A Magic Die is rolled by Katrenia.");
             MessageMonitor(
-                $"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 44, but this time it turned up a 35.");
+                $"[Tue Jan 07 20:43:34 2025] **It could have been any number from 0 to 444, but this time it turned up a 35.");
+
             MessageMonitor($"[Tue Jan 07 20:42:25 2025] **A Magic Die is rolled by Katrenia.");
             MessageMonitor(
                 $"[Tue Jan 07 20:42:25 2025] **It could have been any number from 0 to 443, but this time it turned up a 132.");
