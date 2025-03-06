@@ -93,6 +93,7 @@
             AutoTickReminder = new System.ComponentModel.BackgroundWorker();
             trv_RaidDisplay = new TreeView();
             btn_RefreshCurrentRaid = new Button();
+            btn_CreateRandomRoll = new Button();
             tabControl1.SuspendLayout();
             tabPage5.SuspendLayout();
             tabControl2.SuspendLayout();
@@ -567,6 +568,7 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(btn_CreateRandomRoll);
             tabPage2.Controls.Add(trv_LootRolls);
             tabPage2.Controls.Add(btn_ClearLootRolls);
             tabPage2.Location = new Point(4, 24);
@@ -588,7 +590,7 @@
             // 
             btn_ClearLootRolls.Location = new Point(6, 479);
             btn_ClearLootRolls.Name = "btn_ClearLootRolls";
-            btn_ClearLootRolls.Size = new Size(418, 23);
+            btn_ClearLootRolls.Size = new Size(200, 23);
             btn_ClearLootRolls.TabIndex = 0;
             btn_ClearLootRolls.Text = "Clear Loot Rolls";
             btn_ClearLootRolls.UseVisualStyleBackColor = true;
@@ -729,6 +731,16 @@
             btn_RefreshCurrentRaid.UseVisualStyleBackColor = true;
             btn_RefreshCurrentRaid.Click += btn_RefreshCurrentRaid_Click;
             // 
+            // btn_CreateRandomRoll
+            // 
+            btn_CreateRandomRoll.Location = new Point(224, 479);
+            btn_CreateRandomRoll.Name = "btn_CreateRandomRoll";
+            btn_CreateRandomRoll.Size = new Size(200, 23);
+            btn_CreateRandomRoll.TabIndex = 2;
+            btn_CreateRandomRoll.Text = "Create Random Roll";
+            btn_CreateRandomRoll.UseVisualStyleBackColor = true;
+            btn_CreateRandomRoll.Click += btn_CreateRandomRoll_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -834,5 +846,6 @@
         private DataGridView dgv_RaidTicks;
         private Button btn_RemoveRaidTick;
         private Button btn_RefreshCurrentRaid;
+        private Button btn_CreateRandomRoll;
     }
 }

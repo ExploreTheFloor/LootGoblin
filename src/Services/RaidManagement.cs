@@ -25,32 +25,15 @@ namespace LootGoblin.Services
                 var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
                 foreach (var raidTickFile in raidTickFiles)
                 {
-                    Log.Debug($"Copying: {raidTickFile} to {AppDomain.CurrentDomain.BaseDirectory}\\BackUp\\{DateTime.Now.ToShortDateString().Replace("/", "-")}\\{Path.GetFileName(raidTickFile)}");
-                    File.Copy(raidTickFile, $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}", true);
+                    Log.Debug($@"Copying: {raidTickFile} to {AppDomain.CurrentDomain.BaseDirectory}BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}");
+                    File.Move(raidTickFile, $@"{AppDomain.CurrentDomain.BaseDirectory}BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}", true);
                 }
 
-                ClearRaidTickFiles();
             }
             catch (Exception e)
             {
                 Log.Error($"[{nameof(BackUpRaidTickFiles)}] {e.InnerException}");
             }
-            return Task.CompletedTask;
-        }
-
-        public Task ClearRaidTickFiles()
-        {
-            Log.Debug($"[{nameof(ClearRaidTickFiles)}]");
-            var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
-            if (eqDir == null) return Task.CompletedTask;
-            var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
-            var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
-            foreach (var raidTickFile in raidTickFiles)
-            {
-                Log.Debug($"[{nameof(ClearRaidTickFiles)}] Deleting: {raidTickFile}");
-                File.Delete(raidTickFile);
-            }
-
             return Task.CompletedTask;
         }
 

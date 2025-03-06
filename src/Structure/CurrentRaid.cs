@@ -57,8 +57,8 @@ namespace LootGoblin.Structure
 
     public class Pool
     {
-        [JsonProperty("Id")]
-        public int Id { get; set; }
+        [JsonProperty("PoolId")]
+        public int PoolId { get; set; }
 
         [JsonProperty("Description")]
         public string Description { get; set; }
@@ -73,7 +73,7 @@ namespace LootGoblin.Structure
     public class Tick
     {
         [JsonProperty("Characters")]
-        public List<string> Characters { get; set; } = new List<string>();
+        public List<CharacterTick> Characters { get; set; } = new List<CharacterTick>();
 
         [JsonProperty("Description")]
         public string Description { get; set; }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Media;
 using LootGoblin.Helpers;
@@ -9,9 +10,9 @@ using LootGoblin.Windows;
 using Newtonsoft.Json;
 using Log = Serilog.Log;
 using Microsoft.Toolkit.Uwp.Notifications;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Reflection;
-using System.Runtime.Intrinsics.Arm;
+using System.Xml.Linq;
+using LootGoblin.Services.OpenDkp;
 
 namespace LootGoblin.Forms
 {
@@ -33,37 +34,46 @@ namespace LootGoblin.Forms
         public MainForm()
         {
             InitializeComponent();
+            dgv_LootWinners.DataSource = _dkpWinners;
+            dgv_RaidTicks.DataSource = _raidTicks;
+            CreateFolders();
             Task.Run(async () =>
             {
                 _characters = await _openDkp.GetCharacters();
                 _dkpSummary = await _openDkp.GetDKPSummary();
                 var raidManagement = new RaidManagement();
-                await raidManagement.ClearRaidTickFiles();
+                await raidManagement.BackUpRaidTickFiles();
+
+                _itemDictionary =
+                    JsonConvert.DeserializeObject<Dictionary<int, string>>(
+                        File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Items.Json"));
+                if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"))
+                {
+                    BossValues =
+                        JsonConvert.DeserializeObject<BindingList<BossManagement>>(
+                            File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"));
+                }
             });
-            dgv_LootWinners.DataSource = _dkpWinners;
-            dgv_RaidTicks.DataSource = _raidTicks;
-            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp"))
-                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp");
-            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}Settings"))
-                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}Settings");
-            if (!Directory.Exists(
-                    $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}"))
-                Directory.CreateDirectory(
-                    $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}");
-            _itemDictionary =
-                JsonConvert.DeserializeObject<Dictionary<int, string>>(
-                    File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Items.Json"));
-            if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"))
-            {
-                BossValues =
-                    JsonConvert.DeserializeObject<BindingList<BossManagement>>(
-                        File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"));
-            }
 
             trv_DkpBids.TreeViewNodeSorter = new BidSorter();
             trv_LootRolls.TreeViewNodeSorter = new BidSorter();
             BindObjectToTreeView(CurrentRaid, trv_RaidDisplay);
             tabControl2.ItemSize = tabControl2.ItemSize = tabControl2.ItemSize with { Width = ((tabControl2.Width - 20) / tabControl2.TabPages.Count) - 1 };
+        }
+
+        private void CreateFolders()
+        {
+
+            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}Settings"))
+                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}Settings");
+
+            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}BackUp"))
+                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}BackUp");
+
+            if (!Directory.Exists(
+                    $@"{AppDomain.CurrentDomain.BaseDirectory}BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}"))
+                Directory.CreateDirectory(
+                    $@"{AppDomain.CurrentDomain.BaseDirectory}BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}");
         }
 
         private void BindObjectToTreeView(object? obj, TreeView treeView)
@@ -107,7 +117,7 @@ namespace LootGoblin.Forms
                 {
                     case DialogResult.Yes:
                         var fileName =
-                            $@"{AppDomain.CurrentDomain.BaseDirectory}\BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
+                            $@"{AppDomain.CurrentDomain.BaseDirectory}BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{txtbx_RaidName.Text}.json";
                         var jsonString = JsonConvert.SerializeObject(CurrentRaid);
                         File.WriteAllText(fileName, jsonString);
                         break;
@@ -261,7 +271,11 @@ namespace LootGoblin.Forms
                 });
                 return;
             }
+            //$"Mains Roll {randomNumberString} | Alts Roll {Convert.ToInt32(randomNumberString) - 1} for: ")
+            if (messageToProcess.Contains("Mains Roll") && messageToProcess.Contains("Alts Roll"))
+            {
 
+            }
             if (messageToProcess.Contains("**"))
             {
                 Task.Run(async () =>
@@ -328,7 +342,7 @@ namespace LootGoblin.Forms
                 return;
             }
 
-            var characters = raidAttendance.Select(x => x.Player).ToList();
+            var characters = raidAttendance.Select(x => new CharacterTick { Name = x.Player, CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId }).ToList();
 
             var bossKillTick = new Tick
             {
@@ -379,7 +393,7 @@ namespace LootGoblin.Forms
                     CharacterName = dkpWinner.Player,
                     Dkp = dkpWinner.Bid,
                     GameItemId = GetItemIdFromName(dkpWinner.Item),
-                    ItemId = GetItemIdFromName(dkpWinner.Item),
+                    //ItemId = GetItemIdFromName(dkpWinner.Item),
                     ItemName = dkpWinner.Item,
                     Notes = txtbx_RaidName.Text
                 });
@@ -613,7 +627,6 @@ namespace LootGoblin.Forms
             }
         }
 
-
         public Task UpdateCharacterList(string playerName)
         {
             Log.Debug($"[{nameof(UpdateCharacterList)}] {playerName}");
@@ -693,11 +706,16 @@ namespace LootGoblin.Forms
 
         private string _currentRandomLootPlayerName = "";
 
+        private async Task ParseLootRollAnnouncement(string messageToProcess)
+        {
+            Log.Debug($"[{nameof(ParseLootRollAnnouncement)}] {messageToProcess}");
+            messageToProcess = messageToProcess.RemoveLastCharacter();
+            var trimmedMessage = messageToProcess[64..];
+
+
+        }
         private async Task ParseLootRolls(string messageToProcess)
         {
-            Log.Debug($"[{nameof(ParseLootRolls)}] {messageToProcess}");
-            if (!messageToProcess.Contains("**"))
-                return;
             try
             {
                 Log.Debug($"[{nameof(ParseLootRolls)}] {messageToProcess}");
@@ -827,14 +845,26 @@ namespace LootGoblin.Forms
 
         #endregion ParseMessages
 
+        #region Test
         private Task Test()
         {
+
             Log.Debug($"[{nameof(Test)}]");
+            CurrentRaid.Name = txtbx_RaidName.Text;
+            CurrentRaid.Timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            CurrentRaid.Pool = new Pool
+            {
+                PoolId = 19,
+                Description = "Classic",
+                Name = "Classic",
+                Order = 0
+            };
+            CurrentRaid.Attendance = 1;
             var rand = new Random();
 
             #region Kill Message
 
-            MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test in Plane of Fear Instanced !'");
+            MessageMonitor($"[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, '{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} of Demo> has killed a Test in Plane of Fear Instanced !'");
             //MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test1 in Plane of Fear Instanced !'");
             //MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test2 in Plane of Fear Instanced !'");
 
@@ -842,14 +872,7 @@ namespace LootGoblin.Forms
 
             #region Awarded Loot
 
-            //var grats = $"Congratulations! {PlayerName} bid {bidAmount} dkp for item: {item}"
-            MessageMonitor(
-                $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test1 bid 3 dkp for item: Ton Po's Eye Patch");
-            MessageMonitor(
-                $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test2 bid 4 dkp for item: Ton Po's Shoulder Wraps");
-            MessageMonitor(
-                $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! Test3 bid 5 dkp for item: Ton Po's Bo Stick of Understanding");
-
+            AwardLootTest();
             #endregion Awarded Loot
 
             #region Bids
@@ -946,13 +969,13 @@ namespace LootGoblin.Forms
 
             #region Looted
 
-            MessageMonitor("[Tue Jan 07 23:02:17 2025] --Brodin has looted a Noise Maker.--");
-            MessageMonitor("[Tue Jan 07 22:58:58 2025] --Keliae has looted a Noise Maker.--");
-            MessageMonitor("[Wed Jan 08 09:49:19 2025] --Spideroxy has looted a Salil's Writ Pg. 174.--");
-            MessageMonitor("[Wed Jan 08 09:49:21 2025] --Atlasius has looted a Green Silken Drape.--");
-            MessageMonitor("[Wed Jan 08 14:23:56 2025] --Duvos has looted a Black Henbane.--");
-            MessageMonitor("[Mon Jan 06 20:34:55 2025] --Shadowsong has looted a Spell: Talisman of the Cat.--");
-            MessageMonitor("[Mon Jan 06 20:44:26 2025] --Arrecha has looted a Fire Opal.--");
+            MessageMonitor($"[Tue Jan 07 23:02:17 2025] --{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} has looted a Noise Maker.--");
+            MessageMonitor($"[Tue Jan 07 22:58:58 2025] --{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} has looted a Noise Maker.--");
+            MessageMonitor($"[Wed Jan 08 09:49:19 2025] --{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} has looted a Salil's Writ Pg. 174.--");
+            MessageMonitor($"[Wed Jan 08 09:49:21 2025] --{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} has looted a Green Silken Drape.--");
+            MessageMonitor($"[Wed Jan 08 14:23:56 2025] --{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} has looted a Black Henbane.--");
+            MessageMonitor($"[Mon Jan 06 20:34:55 2025] --{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} has looted a Spell: Talisman of the Cat.--");
+            MessageMonitor($"[Mon Jan 06 20:44:26 2025] --{_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} has looted a Fire Opal.--");
 
             #endregion Looted
 
@@ -960,6 +983,26 @@ namespace LootGoblin.Forms
             UpdateRaidInformation();
 
             return Task.CompletedTask;
+        }
+
+        private void AwardLootTest()
+        {
+            var rand = new Random();
+            for (int i = 0; i < 10; i++)
+            {
+                try
+                {
+                    //var grats = $"Congratulations! {PlayerName} bid {bidAmount} dkp for item: {item}"
+                    MessageMonitor(
+                        $"[Tue Jan 07 20:42:25 2025] You tell the raid,  'Congratulations! {_characters.Skip(rand.Next(0, _characters.Count)).Select(x => x.Name).FirstOrDefault()} bid {rand.Next(1, 100)} dkp for item: {GetItemNameFromId(rand.Next(10, 10000))}");
+                    Thread.Sleep(100);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            }
         }
 
         private void UpdateTicksTest()
@@ -972,43 +1015,44 @@ namespace LootGoblin.Forms
             }
             CurrentRaid?.Ticks.Add(new Tick
             {
-                Characters = _characters.Take(5).ToList().Select(x => x.Name).ToList(),
+                Characters = _characters.Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 1",
                 Value = txtbx_AutoTickDkp.Text
             });
             _raidTicks.Add(new Tick
             {
-                Characters = _characters.Take(5).ToList().Select(x => x.Name).ToList(),
+                Characters = _characters.Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 1",
                 Value = txtbx_AutoTickDkp.Text
             });
 
             CurrentRaid.Ticks.Add(new Tick
             {
-                Characters = _characters.Skip(5).Take(5).ToList().Select(x => x.Name).ToList(),
+                Characters = _characters.Skip(5).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 2",
                 Value = txtbx_AutoTickDkp.Text
             });
             _raidTicks.Add(new Tick
             {
-                Characters = _characters.Skip(5).Take(5).ToList().Select(x => x.Name).ToList(),
+                Characters = _characters.Skip(5).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 2",
                 Value = txtbx_AutoTickDkp.Text
             });
 
             CurrentRaid.Ticks.Add(new Tick
             {
-                Characters = _characters.Skip(3).Take(5).ToList().Select(x => x.Name).ToList(),
+                Characters = _characters.Skip(3).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
                 Value = txtbx_AutoTickDkp.Text
             });
             _raidTicks.Add(new Tick
             {
-                Characters = _characters.Skip(3).Take(5).ToList().Select(x => x.Name).ToList(),
+                Characters = _characters.Skip(3).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
                 Value = txtbx_AutoTickDkp.Text
             });
         }
+        #endregion Test
 
 
         private void RefreshDataGridView(DataGridView dgv)
@@ -1251,7 +1295,7 @@ namespace LootGoblin.Forms
 
                     var autoTick = new Tick
                     {
-                        Characters = characters.Select(x => x.Name).ToList(),
+                        Characters = characters.Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
                         Description = $"{txtbx_TickDescription.Text}",
                         Value = txtbx_TickDkpValue.Text
                     };
@@ -1285,7 +1329,7 @@ namespace LootGoblin.Forms
                     return;
                 }
 
-                var characters = raidAttendance.Select(x => x.Player).ToList();
+                var characters = raidAttendance.Select(x => new CharacterTick { Name = x.Player, CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId }).ToList();
 
                 var autoTick = new Tick
                 {
@@ -1403,10 +1447,10 @@ namespace LootGoblin.Forms
         {
             Log.Debug($"[{nameof(btn_SubmitRaid_Click)}]");
             CurrentRaid.Name = txtbx_RaidName.Text;
-            CurrentRaid.Timestamp = DateTime.Now.ToString("MM-dd-yyyyTHH:mm:ss.fffZ");
+            CurrentRaid.Timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
             CurrentRaid.Pool = new Pool
             {
-                Id = 19,
+                PoolId = 19,
                 Description = "Kunark",
                 Name = "Kunark",
                 Order = 0
@@ -1549,6 +1593,63 @@ namespace LootGoblin.Forms
         {
             Log.Debug($"[{nameof(MainForm_FormClosing)}]");
             SaveCurrentRaid();
+        }
+
+        private readonly Dictionary<DateTime, string> _randomTracker = new();
+        private void btn_CreateRandomRoll_Click(object sender, EventArgs e)
+        {
+            var removeRolls = _randomTracker.Keys.Where(x => x + new TimeSpan(0, 0, 5, 0) < DateTime.Now);
+            foreach (var removeRoll in removeRolls)
+            {
+                _randomTracker.Remove(removeRoll);
+            }
+            
+            var randomNumberString = "";
+            var lastNumber = 0;
+            var rand = new Random();
+            var sequential = rand.Next(0, 2);
+            var totalDigits = rand.Next(3, 6);
+            if (sequential == 1)
+            {
+                totalDigits = rand.Next(3, 5);
+            }
+
+            for (var i = 0; i < totalDigits; i++)
+            {
+                if (sequential == 0)
+                {
+                    if (lastNumber == 0)
+                        lastNumber = rand.Next(1, 9);
+                    randomNumberString += lastNumber.ToString();
+                }
+                else if (lastNumber == 0)
+                {
+                    lastNumber = rand.Next(1, 9 - totalDigits);
+                    randomNumberString += lastNumber.ToString();
+                }
+                else
+                {
+                    lastNumber += 1;
+                    randomNumberString += lastNumber.ToString();
+                }
+
+                if (i != totalDigits-1)
+                    continue;
+                if (!_randomTracker.ContainsValue(randomNumberString))
+                {
+                    _randomTracker.Add(DateTime.Now, randomNumberString);
+                    continue;
+                }
+
+
+                i = -1;
+                lastNumber = 0;
+                randomNumberString = "";
+                sequential = sequential == 1 ? 0 : 1;
+            }
+
+            Task.Run(async () =>
+                await ClipboardManager.CopyToClipboard($"Mains Roll {randomNumberString} | Alts Roll {Convert.ToInt32(randomNumberString) - 1} for: "));
         }
     }
 }

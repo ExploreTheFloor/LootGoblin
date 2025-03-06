@@ -61,13 +61,10 @@ namespace LootGoblin.Services
 
         public async Task<List<DkpBidder>> GetAllUserLoot()
         {
-            var openDkp = new OpenDkp();
+            var openDkp = new OpenDkp.OpenDkp();
             var characters = await openDkp.GetCharacters();
             List<Task> taskList = new List<Task>();
             List<DkpBidder> charactersAndItems = new List<DkpBidder>();
-
-            if (characters == null) 
-                return charactersAndItems;
 
             foreach (var character in characters)
             {
