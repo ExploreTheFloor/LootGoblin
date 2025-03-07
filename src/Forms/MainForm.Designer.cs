@@ -75,6 +75,7 @@
             btn_ClearDkpBids = new Button();
             trv_DkpBids = new TreeView();
             tabPage2 = new TabPage();
+            btn_CreateRandomRoll = new Button();
             trv_LootRolls = new TreeView();
             btn_ClearLootRolls = new Button();
             tabPage3 = new TabPage();
@@ -93,7 +94,6 @@
             AutoTickReminder = new System.ComponentModel.BackgroundWorker();
             trv_RaidDisplay = new TreeView();
             btn_RefreshCurrentRaid = new Button();
-            btn_CreateRandomRoll = new Button();
             tabControl1.SuspendLayout();
             tabPage5.SuspendLayout();
             tabControl2.SuspendLayout();
@@ -579,12 +579,24 @@
             tabPage2.Text = "Player Rolls";
             tabPage2.UseVisualStyleBackColor = true;
             // 
+            // btn_CreateRandomRoll
+            // 
+            btn_CreateRandomRoll.Location = new Point(224, 479);
+            btn_CreateRandomRoll.Name = "btn_CreateRandomRoll";
+            btn_CreateRandomRoll.Size = new Size(200, 23);
+            btn_CreateRandomRoll.TabIndex = 2;
+            btn_CreateRandomRoll.Text = "Create Random Roll";
+            btn_CreateRandomRoll.UseVisualStyleBackColor = true;
+            btn_CreateRandomRoll.Click += btn_CreateRandomRoll_Click;
+            // 
             // trv_LootRolls
             // 
             trv_LootRolls.Location = new Point(6, 6);
             trv_LootRolls.Name = "trv_LootRolls";
+            trv_LootRolls.ShowNodeToolTips = true;
             trv_LootRolls.Size = new Size(418, 467);
             trv_LootRolls.TabIndex = 1;
+            trv_LootRolls.NodeMouseClick += trv_LootRolls_NodeMouseClick;
             // 
             // btn_ClearLootRolls
             // 
@@ -730,16 +742,6 @@
             btn_RefreshCurrentRaid.Text = "Refresh Current Raid";
             btn_RefreshCurrentRaid.UseVisualStyleBackColor = true;
             btn_RefreshCurrentRaid.Click += btn_RefreshCurrentRaid_Click;
-            // 
-            // btn_CreateRandomRoll
-            // 
-            btn_CreateRandomRoll.Location = new Point(224, 479);
-            btn_CreateRandomRoll.Name = "btn_CreateRandomRoll";
-            btn_CreateRandomRoll.Size = new Size(200, 23);
-            btn_CreateRandomRoll.TabIndex = 2;
-            btn_CreateRandomRoll.Text = "Create Random Roll";
-            btn_CreateRandomRoll.UseVisualStyleBackColor = true;
-            btn_CreateRandomRoll.Click += btn_CreateRandomRoll_Click;
             // 
             // MainForm
             // 

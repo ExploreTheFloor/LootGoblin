@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LootGoblin.Structure.OpenDkp.Items;
+﻿using LootGoblin.Structure.OpenDkp.Items;
+using Newtonsoft.Json;
+using Serilog;
 
 namespace LootGoblin.Services.OpenDkp
 {
@@ -25,7 +22,7 @@ namespace LootGoblin.Services.OpenDkp
             Log.Debug($"[{nameof(ItemSearchPost)}]");
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Post,
-                $"https://api.opendkp.com/items"); 
+                $"https://api.opendkp.com/items");
             var jsonSerialized = JsonConvert.SerializeObject(itemNames);
             var content = new StringContent(jsonSerialized, null, "application/x-amz-json-1.1");
             var response = await client.SendAsync(request).ConfigureAwait(false);
