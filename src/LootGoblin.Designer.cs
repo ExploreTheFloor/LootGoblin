@@ -106,5 +106,17 @@ namespace LootGoblin {
                 this["CharacterName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseAutomaticRaidTicks {
+            get {
+                return ((bool)(this["UseAutomaticRaidTicks"]));
+            }
+            set {
+                this["UseAutomaticRaidTicks"] = value;
+            }
+        }
     }
 }

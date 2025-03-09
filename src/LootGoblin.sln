@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LootGoblin", "LootGoblin.csproj", "{6BD446A2-3C2E-496B-8E3E-5ED2DE048A8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LootGoblin", "LootGoblin.csproj", "{6BD446A2-3C2E-496B-8E3E-5ED2DE048A8F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interceptor", "..\..\GameAssistant\src\Net5\Framework\Interceptor\Interceptor.csproj", "{F1141C54-132C-4B89-B971-2C5ACC4ACF37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{6BD446A2-3C2E-496B-8E3E-5ED2DE048A8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BD446A2-3C2E-496B-8E3E-5ED2DE048A8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BD446A2-3C2E-496B-8E3E-5ED2DE048A8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1141C54-132C-4B89-B971-2C5ACC4ACF37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1141C54-132C-4B89-B971-2C5ACC4ACF37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1141C54-132C-4B89-B971-2C5ACC4ACF37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1141C54-132C-4B89-B971-2C5ACC4ACF37}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,6 +10,11 @@ using Log = Serilog.Log;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System.Reflection;
 using LootGoblin.Services.OpenDkp;
+using System.Runtime.InteropServices;
+using Interceptor;
+using Keys = Interceptor.KeyboardHelper.Keys;
+using Extensions;
+using System.IO.Compression;
 
 namespace LootGoblin.Forms
 {
@@ -25,8 +30,10 @@ namespace LootGoblin.Forms
         public CurrentRaid CurrentRaid = new CurrentRaid();
         private BindingList<DkpWinner> _dkpWinners = new BindingList<DkpWinner>();
         private BindingList<Tick> _raidTicks = new BindingList<Tick>();
-        private Dictionary<int, string>? _itemDictionary;
+        private Dictionary<int, string> _itemDictionary = new Dictionary<int, string>();
         private readonly List<DkpBidder> _charactersAndItems = new List<DkpBidder>();
+
+        private Driver Driver { get; set; }
 
         public MainForm()
         {
@@ -34,6 +41,8 @@ namespace LootGoblin.Forms
             dgv_LootWinners.DataSource = _dkpWinners;
             dgv_RaidTicks.DataSource = _raidTicks;
             CreateFolders();
+            if (LootGoblin.Default.UseAutomaticRaidTicks)
+                LoadInterceptor();
             Task.Run(async () =>
             {
                 _characters = await _openDkp.GetCharacters();
@@ -50,16 +59,111 @@ namespace LootGoblin.Forms
                         JsonConvert.DeserializeObject<BindingList<BossManagement>>(
                             File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"));
                 }
+
+                await BindObjectToTreeView(CurrentRaid, trv_RaidDisplay);
             });
 
             trv_DkpBids.TreeViewNodeSorter = new BidSorter();
             trv_LootRolls.TreeViewNodeSorter = new BidSorter();
-            BindObjectToTreeView(CurrentRaid, trv_RaidDisplay);
-            tabControl2.ItemSize = tabControl2.ItemSize = tabControl2.ItemSize with { Width = ((tabControl2.Width - 20) / tabControl2.TabPages.Count) - 1 };
+            tabControl2.ItemSize = tabControl2.ItemSize = tabControl2.ItemSize with
+            {
+                Width = ((tabControl2.Width - 20) / tabControl2.TabPages.Count) - 1
+            };
+            chkbx_UseAutomaticRaidTicks.Checked = LootGoblin.Default.UseAutomaticRaidTicks;
+        }
+
+        /// <summary>
+        /// Debugging this cause you to lose Keyboard and Mouse control
+        /// </summary>
+        public void LoadInterceptor()
+        {
+            Driver = new Driver
+            {
+                Options = new Options
+                {
+                    // KeyboardFilterMode.All captures all events; 'Down' only captures presses for non-special keys; 'Up' only captures releases for non-special keys; 'E0' and 'E1' capture presses/releases for special keys
+                    // Be sure to set your keyboard filter to be able to capture key presses and simulate key presses
+                    KeyboardFilterMode = KeyboardFilterMode.ALL,
+                    MouseFilterMode = MouseFilterMode.ALL,
+                    ClickDelay = Interceptor.Default.ClickDelay,
+                    ScrollDelay = Interceptor.Default.ScrollDelay,
+                    MoveDelay = Interceptor.Default.MoveDelay,
+                    KeyPressDelay = Interceptor.Default.KeyPressDelay,
+                    KeyboardDeviceId = Interceptor.Default.KeyboardDeviceId,
+                    MouseDeviceId = Interceptor.Default.MouseDeviceId
+                }
+            };
+
+            // Assume the DLL is in a sub-folder of the folder where `App.exe` is located
+            var myLibraryFullPath = Environment.Is64BitProcess
+                ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\x64\interception.dll")
+                : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\x86\interception.dll");
+
+            // Load the appropriate DLL into the current process
+            if (!File.Exists(myLibraryFullPath))
+            {
+                MessageBox.Show("Unable to Load Keyboard Driver.  Automated Ticks will not work.",
+                    "ERROR WITH KEYBOARD DRIVER", MessageBoxButtons.OK);
+                return;
+            }
+
+            NativeLibrary.Load(myLibraryFullPath);
+            Driver.Load();
+
+            //Get the Driver Ids
+
+            if (Driver.Options.MouseDeviceId == 0)
+            {
+                DialogResult dialogResult = MessageBox.Show(@"Please click ""Ok"" with your Mouse.",
+                    "Mouse Detection", MessageBoxButtons.OK);
+                Interceptor.Default.MouseDeviceId = Driver.Options.MouseDeviceId;
+            }
+
+            if (Driver.Options.KeyboardDeviceId == 0)
+            {
+                DialogResult dialogResult = MessageBox.Show(@"Please hit ""Enter"" on your Keyboard.",
+                    "Keyboard Detection", MessageBoxButtons.OK);
+                Interceptor.Default.KeyboardDeviceId = Driver.Options.KeyboardDeviceId;
+            }
+
+            Interceptor.Default.Save();
+        }
+
+        public async Task DownloadAndInstallInterceptor()
+        {
+            Log.Debug($"[{nameof(DownloadAndInstallInterceptor)}]");
+            try
+            {
+                var downloadZipLocation =
+                    "https://github.com/oblitum/Interception/releases/download/v1.0.1/Interception.zip";
+                var downloadFolder = $@"{AppDomain.CurrentDomain.BaseDirectory}Downloads";
+                var downloadedFile = downloadFolder + @"\Interception.zip";
+                //Create Directory if it does not exist.
+                if (!Directory.Exists(downloadFolder))
+                    Directory.CreateDirectory(downloadFolder);
+                //Download and Extract the Contents
+                using var httpClient = new HttpClient();
+                await httpClient.DownloadFile(downloadZipLocation, downloadedFile);
+                ZipFile.ExtractToDirectory(downloadedFile, downloadFolder, true);
+                //Copy over the files and delete the folder
+                Process.Start(
+                    $@"{AppDomain.CurrentDomain.BaseDirectory}Downloads\Interception\command line installer\install-interception.exe",
+                    "/install");
+                //Directory.Delete(downloadFolder, true);
+
+            }
+            catch (Exception ex)
+            {
+                Log.Error(
+                    $"[{nameof(DownloadAndInstallInterceptor)}] {ex.Message}");
+            }
         }
 
         private void CreateFolders()
         {
+
+            if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}Downloads"))
+                Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}Downloads");
 
             if (!Directory.Exists($@"{AppDomain.CurrentDomain.BaseDirectory}Settings"))
                 Directory.CreateDirectory($@"{AppDomain.CurrentDomain.BaseDirectory}Settings");
@@ -73,13 +177,13 @@ namespace LootGoblin.Forms
                     $@"{AppDomain.CurrentDomain.BaseDirectory}BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}");
         }
 
-        private void BindObjectToTreeView(object? obj, TreeView treeView)
+        private Task BindObjectToTreeView(object? obj, TreeView treeView)
         {
             Log.Debug($"[{nameof(BindObjectToTreeView)}]");
             // Ensure modifications to TreeView are done on the UI thread
             if (treeView.InvokeRequired)
             {
-                treeView.Invoke((Delegate)(() => BindObjectToTreeView(obj, treeView)));
+                treeView.Invoke((Delegate) (() => BindObjectToTreeView(obj, treeView)));
             }
             else
             {
@@ -95,12 +199,14 @@ namespace LootGoblin.Forms
                 treeView.Nodes[0].Expand();
                 treeView.Refresh();
             }
+
+            return Task.CompletedTask;
         }
 
-        private void UpdateRaidInformation()
+        private async Task UpdateRaidInformation()
         {
             Log.Debug($"[{nameof(UpdateRaidInformation)}]");
-            BindObjectToTreeView(CurrentRaid, trv_RaidDisplay);
+            await BindObjectToTreeView(CurrentRaid, trv_RaidDisplay);
         }
 
         private void SaveCurrentRaid()
@@ -124,6 +230,25 @@ namespace LootGoblin.Forms
             }
         }
 
+        private Task SendRaidOutput()
+        {
+            var eqProcess = WinApi.GetProcessByName("eqgame").FirstOrDefault();
+            WinApi.SetForegroundWindow(eqProcess.MainWindowHandle);
+
+            ClipboardManager.CopyToClipboard(@"/output RaidList");
+            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.DOWN);
+            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.UP);
+            Thread.Sleep(500);
+            Driver.Keyboard.SendKey(Keys.CONTROL, KeyState.DOWN);
+            Driver.Keyboard.SendKey(Keys.V, KeyState.DOWN);
+            Driver.Keyboard.SendKey(Keys.V, KeyState.UP);
+            Driver.Keyboard.SendKey(Keys.CONTROL, KeyState.UP);
+            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.DOWN);
+            Thread.Sleep(500);
+            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.UP);
+            return Task.CompletedTask;
+        }
+
         private void AddObjectPropertiesToTreeView(object? obj, TreeNode parentNode, string parentPropertyName = "")
         {
             Log.Debug($"[{nameof(AddObjectPropertiesToTreeView)}]");
@@ -143,11 +268,13 @@ namespace LootGoblin.Forms
                 foreach (var item in collection)
                 {
                     // Use the parent node's name and the index for item text
-                    string nodeName = $"{parentPropertyName.TrimEnd('s')} {index++}"; // Example: "Tick 0", "Item 1", etc.
+                    string nodeName =
+                        $"{parentPropertyName.TrimEnd('s')} {index++}"; // Example: "Tick 0", "Item 1", etc.
 
                     TreeNode node = new TreeNode(nodeName);
                     parentNode.Nodes.Add(node);
-                    AddObjectPropertiesToTreeView(item, node, parentPropertyName); // Recursively add nested objects in collection
+                    AddObjectPropertiesToTreeView(item, node,
+                        parentPropertyName); // Recursively add nested objects in collection
                 }
             }
             else
@@ -199,14 +326,16 @@ namespace LootGoblin.Forms
                             // Handle nested objects by recursively calling AddObjectPropertiesToTreeView
                             TreeNode propertyNode = new TreeNode($"{property.Name}:");
                             parentNode.Nodes.Add(propertyNode);
-                            AddObjectPropertiesToTreeView(propertyValue, propertyNode, property.Name); // Recursive call for nested objects
+                            AddObjectPropertiesToTreeView(propertyValue, propertyNode,
+                                property.Name); // Recursive call for nested objects
                         }
                     }
                     catch (Exception ex)
                     {
                         // Handle any errors while accessing property values
                         parentNode.Nodes.Add($"{property.Name}: Error!");
-                        Log.Error($"[{nameof(AddObjectPropertiesToTreeView)}] Error accessing property {property.Name}: {ex.Message}");
+                        Log.Error(
+                            $"[{nameof(AddObjectPropertiesToTreeView)}] Error accessing property {property.Name}: {ex.Message}");
                     }
                 }
             }
@@ -271,26 +400,18 @@ namespace LootGoblin.Forms
 
             if (messageToProcess.Contains("Mains Roll") && messageToProcess.Contains("Alts Roll"))
             {
-                Task.Run(async () =>
-                {
-                    await ParseLootRollAnnouncement(messageToProcess);
-                });
+                Task.Run(async () => { await ParseLootRollAnnouncement(messageToProcess); });
             }
+
             if (messageToProcess.Contains("**"))
             {
-                Task.Run(async () =>
-                {
-                    await ParseLootRolls(messageToProcess);
-                });
+                Task.Run(async () => { await ParseLootRolls(messageToProcess); });
                 return;
             }
 
             if (messageToProcess.Contains("] --") && messageToProcess.Contains("has looted a"))
             {
-                Task.Run(async () =>
-                {
-                    await ParseLootedItems(messageToProcess);
-                });
+                Task.Run(async () => { await ParseLootedItems(messageToProcess); });
                 return;
             }
 
@@ -300,10 +421,7 @@ namespace LootGoblin.Forms
                  !messageToProcess.Contains($"tells the guild") && !messageToProcess.Contains($"tells the raid")))
                 return;
 
-            Task.Run(async () =>
-            {
-                await ParseDkpBids(messageToProcess);
-            });
+            Task.Run(async () => { await ParseDkpBids(messageToProcess); });
         }
 
         private async Task ParseKillMessage(string messageToProcess)
@@ -342,7 +460,9 @@ namespace LootGoblin.Forms
                 return;
             }
 
-            var characters = raidAttendance.Select(x => new CharacterTick { Name = x.Player, CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId }).ToList();
+            var characters = raidAttendance.Select(x => new CharacterTick
+                    {Name = x.Player, CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId})
+                .ToList();
 
             var bossKillTick = new Tick
             {
@@ -388,7 +508,8 @@ namespace LootGoblin.Forms
             {
                 Log.Information(
                     $"[{nameof(UpdateAwardedLoot)}] Player: {dkpWinner.Player} | Item: {dkpWinner.Item} | Bid: {dkpWinner.Bid}");
-                var itemId = await _openDkp.ItemSearchPost(new string[] { dkpWinner.Item });
+                var itemId = await _openDkp.ItemSearchGet(dkpWinner.Item);
+                //var itemId = await _openDkp.ItemSearchPost(new string[] { dkpWinner.Item });
                 CurrentRaid.Items.Add(new Item
                 {
                     CharacterName = dkpWinner.Player,
@@ -455,10 +576,7 @@ namespace LootGoblin.Forms
             Log.Debug($"[{nameof(UpdateDkpBid)}]");
             if (trv_DkpBids.InvokeRequired)
             {
-                trv_DkpBids.BeginInvoke(delegate
-                {
-                    _ = UpdateDkpBid(itemName, biddersName, bidAmount, bidType);
-                });
+                trv_DkpBids.BeginInvoke(delegate { _ = UpdateDkpBid(itemName, biddersName, bidAmount, bidType); });
                 return;
             }
 
@@ -714,6 +832,7 @@ namespace LootGoblin.Forms
                 trv_LootRolls.BeginInvoke(delegate { ParseLootRollAnnouncement(messageToProcess); });
                 return;
             }
+
             //$"Mains Roll {randomNumberString} | Alts Roll {Convert.ToInt32(randomNumberString) - 1} for: ")
             Log.Debug($"[{nameof(ParseLootRollAnnouncement)}] {messageToProcess}");
             var initialSplitMessage = messageToProcess.Split(',')[1];
@@ -773,7 +892,8 @@ namespace LootGoblin.Forms
             {
                 await AddToCharacterItemList(playerName);
                 trv_LootRolls.BeginUpdate();
-                var foundRollRange = Collect(trv_LootRolls.Nodes).FirstOrDefault(x => x.Text.Split(" | ")[2] == rollRange.Split(" ")[2]);
+                var foundRollRange = Collect(trv_LootRolls.Nodes)
+                    .FirstOrDefault(x => x.Text.Split(" | ")[2] == rollRange.Split(" ")[2]);
                 var foundCharacter = _charactersAndItems.FirstOrDefault(x => x.Character.Name == playerName);
 
                 var foundDuplicateItems = _charactersAndItems
@@ -782,7 +902,8 @@ namespace LootGoblin.Forms
                     .Select(y => new
                     {
                         Name = y.Character.Name,
-                        Date = y.CharacterItems.FirstOrDefault(z => z.ItemName == foundRollRange.Text.Split(" | ")[0])?.Date.ToShortDateString()
+                        Date = y.CharacterItems.FirstOrDefault(z => z.ItemName == foundRollRange.Text.Split(" | ")[0])
+                            ?.Date.ToShortDateString()
                     }).Distinct().ToList();
 
                 if (foundRollRange != null)
@@ -796,6 +917,7 @@ namespace LootGoblin.Forms
                             toolTipText += $"{foundDuplicateItem.Name} | {foundDuplicateItem.Date}";
                         }
                     }
+
                     var foundPlayersName =
                         Collect(foundRollRange.Nodes).FirstOrDefault(x => x.Text.Contains(playerName));
                     if (foundPlayersName != null)
@@ -833,6 +955,7 @@ namespace LootGoblin.Forms
                         $"[{nameof(ParseLootRolls)}] Unable to find Range: {rollRange}.");
                     return;
                 }
+
                 Log.Information(
                     $"[{nameof(ParseLootRolls)}] Added Range: {rollRange} Name: {playerName} Roll: {playerRoll}");
                 trv_LootRolls.EndUpdate();
@@ -894,8 +1017,11 @@ namespace LootGoblin.Forms
         #endregion ParseMessages
 
         #region Test
+
         private Task Test()
         {
+            //Task.Run(SendRaidOutput);
+            return Task.CompletedTask;
 
             Log.Debug($"[{nameof(Test)}]");
             CurrentRaid.Name = txtbx_RaidName.Text;
@@ -912,7 +1038,8 @@ namespace LootGoblin.Forms
 
             #region Kill Message
 
-            MessageMonitor($"[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, '{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} of Demo> has killed a Cazic-Thule in Plane of Fear Instanced !'");
+            MessageMonitor(
+                $"[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, '{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} of Demo> has killed a Cazic-Thule in Plane of Fear Instanced !'");
             //MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test1 in Plane of Fear Instanced !'");
             //MessageMonitor("[Tue Jan 07 20:42:25 2025] Druzzil Ro tells the guild, 'Remorse of Savage> has killed a Test2 in Plane of Fear Instanced !'");
 
@@ -1001,13 +1128,20 @@ namespace LootGoblin.Forms
 
             #region Looted
 
-            MessageMonitor($"[Tue Jan 07 23:02:17 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Noise Maker.--");
-            MessageMonitor($"[Tue Jan 07 22:58:58 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Noise Maker.--");
-            MessageMonitor($"[Wed Jan 08 09:49:19 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Salil's Writ Pg. 174.--");
-            MessageMonitor($"[Wed Jan 08 09:49:21 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Green Silken Drape.--");
-            MessageMonitor($"[Wed Jan 08 14:23:56 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Black Henbane.--");
-            MessageMonitor($"[Mon Jan 06 20:34:55 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Spell: Talisman of the Cat.--");
-            MessageMonitor($"[Mon Jan 06 20:44:26 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Fire Opal.--");
+            MessageMonitor(
+                $"[Tue Jan 07 23:02:17 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Noise Maker.--");
+            MessageMonitor(
+                $"[Tue Jan 07 22:58:58 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Noise Maker.--");
+            MessageMonitor(
+                $"[Wed Jan 08 09:49:19 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Salil's Writ Pg. 174.--");
+            MessageMonitor(
+                $"[Wed Jan 08 09:49:21 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Green Silken Drape.--");
+            MessageMonitor(
+                $"[Wed Jan 08 14:23:56 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Black Henbane.--");
+            MessageMonitor(
+                $"[Mon Jan 06 20:34:55 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Spell: Talisman of the Cat.--");
+            MessageMonitor(
+                $"[Mon Jan 06 20:44:26 2025] --{_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()} has looted a Fire Opal.--");
 
             #endregion Looted
 
@@ -1020,17 +1154,20 @@ namespace LootGoblin.Forms
         private void LootRollTest()
         {
             var rand = new Random();
-            MessageMonitor($"[Mon Nov 25 21:59:28 2024] You tell the raid,  Mains Roll 444 | Alts Roll {Convert.ToInt32("444") - 1} for: Crown of Rile");
-            MessageMonitor($"[Mon Nov 25 21:59:28 2024] You tell the raid,  Mains Roll 333 | Alts Roll {Convert.ToInt32("333") - 1} for: {GetItemNameFromId(rand.Next(10, 10000))}");
+            MessageMonitor(
+                $"[Mon Nov 25 21:59:28 2024] You tell the raid,  Mains Roll 444 | Alts Roll {Convert.ToInt32("444") - 1} for: Crown of Rile");
+            MessageMonitor(
+                $"[Mon Nov 25 21:59:28 2024] You tell the raid,  Mains Roll 333 | Alts Roll {Convert.ToInt32("333") - 1} for: {GetItemNameFromId(rand.Next(10, 10000))}");
             Thread.Sleep(1000);
 
             for (int i = 0; i < 30; i++)
             {
                 try
                 {
-                    var randomNumbers = new int[] { 444, 443, 333, 332 };
+                    var randomNumbers = new int[] {444, 443, 333, 332};
                     var pickRandomNumber = randomNumbers[rand.Next(0, 4)];
-                    MessageMonitor($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by {_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()}.");
+                    MessageMonitor(
+                        $"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by {_characters.Skip(rand.Next(1, _characters.Count - 1)).Select(x => x.Name).FirstOrDefault()}.");
                     MessageMonitor(
                         $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to {pickRandomNumber}, but this time it turned up a {rand.Next(0, pickRandomNumber)}.");
                     Thread.Sleep(500);
@@ -1041,6 +1178,7 @@ namespace LootGoblin.Forms
                     throw;
                 }
             }
+
             MessageMonitor($"[Mon Jan 06 20:41:51 2025] **A Magic Die is rolled by Cyrano.");
             MessageMonitor(
                 $"[Mon Jan 06 20:41:51 2025] **It could have been any number from 0 to 444, but this time it turned up a 69.");
@@ -1049,7 +1187,7 @@ namespace LootGoblin.Forms
         private void AwardLootTest()
         {
             var rand = new Random();
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
             {
                 try
                 {
@@ -1074,45 +1212,53 @@ namespace LootGoblin.Forms
                 dgv_RaidTicks.BeginInvoke(delegate { UpdateTicksTest(); });
                 return;
             }
+
             CurrentRaid?.Ticks.Add(new Tick
             {
-                Characters = _characters.Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
+                Characters = _characters.Take(5).ToList()
+                    .Select(x => new CharacterTick {Name = x.Name, CharacterId = x.CharacterId}).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 1",
                 Value = txtbx_AutoTickDkp.Text
             });
             _raidTicks.Add(new Tick
             {
-                Characters = _characters.Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
+                Characters = _characters.Take(5).ToList()
+                    .Select(x => new CharacterTick {Name = x.Name, CharacterId = x.CharacterId}).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 1",
                 Value = txtbx_AutoTickDkp.Text
             });
 
             CurrentRaid.Ticks.Add(new Tick
             {
-                Characters = _characters.Skip(5).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
+                Characters = _characters.Skip(5).Take(5).ToList()
+                    .Select(x => new CharacterTick {Name = x.Name, CharacterId = x.CharacterId}).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 2",
                 Value = txtbx_AutoTickDkp.Text
             });
             _raidTicks.Add(new Tick
             {
-                Characters = _characters.Skip(5).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
+                Characters = _characters.Skip(5).Take(5).ToList()
+                    .Select(x => new CharacterTick {Name = x.Name, CharacterId = x.CharacterId}).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 2",
                 Value = txtbx_AutoTickDkp.Text
             });
 
             CurrentRaid.Ticks.Add(new Tick
             {
-                Characters = _characters.Skip(3).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
+                Characters = _characters.Skip(3).Take(5).ToList()
+                    .Select(x => new CharacterTick {Name = x.Name, CharacterId = x.CharacterId}).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
                 Value = txtbx_AutoTickDkp.Text
             });
             _raidTicks.Add(new Tick
             {
-                Characters = _characters.Skip(3).Take(5).ToList().Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
+                Characters = _characters.Skip(3).Take(5).ToList()
+                    .Select(x => new CharacterTick {Name = x.Name, CharacterId = x.CharacterId}).ToList(),
                 Description = $"{txtbx_RaidName.Text} - AutoTick: 3",
                 Value = txtbx_AutoTickDkp.Text
             });
         }
+
         #endregion Test
 
 
@@ -1124,6 +1270,7 @@ namespace LootGoblin.Forms
                 dgv.BeginInvoke(delegate { RefreshDataGridView(dgv); });
                 return;
             }
+
             dgv.Refresh();
         }
 
@@ -1345,7 +1492,8 @@ namespace LootGoblin.Forms
                 var raidAttendance = await raidManagement.GetRaidAttendance();
                 if (!raidAttendance.Any())
                 {
-                    Log.Warning($"[{nameof(btn_SubmitManualTick_Click)}] Unable to get raid attendance! Please type /output RaidList in game and try again.");
+                    Log.Warning(
+                        $"[{nameof(btn_SubmitManualTick_Click)}] Unable to get raid attendance! Please type /output RaidList in game and try again.");
                     return;
                 }
 
@@ -1356,7 +1504,8 @@ namespace LootGoblin.Forms
 
                     var autoTick = new Tick
                     {
-                        Characters = characters.Select(x => new CharacterTick { Name = x.Name, CharacterId = x.CharacterId }).ToList(),
+                        Characters = characters.Select(x => new CharacterTick
+                            {Name = x.Name, CharacterId = x.CharacterId}).ToList(),
                         Description = $"{txtbx_TickDescription.Text}",
                         Value = txtbx_TickDkpValue.Text
                     };
@@ -1390,7 +1539,11 @@ namespace LootGoblin.Forms
                     return;
                 }
 
-                var characters = raidAttendance.Select(x => new CharacterTick { Name = x.Player, CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId }).ToList();
+                var characters = raidAttendance.Select(x => new CharacterTick
+                    {
+                        Name = x.Player, CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId
+                    })
+                    .ToList();
 
                 var autoTick = new Tick
                 {
@@ -1462,6 +1615,14 @@ namespace LootGoblin.Forms
                 }
                 else
                 {
+                    if (LootGoblin.Default.UseAutomaticRaidTicks)
+                    {
+                        var eqProcess = WinApi.GetProcessByName("eqgame").FirstOrDefault();
+                        WinApi.SetForegroundWindow(eqProcess.MainWindowHandle);
+                        Task.Run(SendRaidOutput);
+                        return;
+                    }
+
                     BringToFront();
                     RaidTickTimer.Stop();
                     Task.Run(() =>
@@ -1604,12 +1765,14 @@ namespace LootGoblin.Forms
                 Log.Warning($"[{nameof(btn_LogMonitor_Click)}] No raid name set.");
                 return;
             }
+
             if (string.IsNullOrEmpty(LootGoblin.Default.LogLocation))
             {
                 MessageBox.Show(@"Please set the log location");
                 Log.Warning($"[{nameof(btn_LogMonitor_Click)}] No log location set.");
                 return;
             }
+
             _logMonitor ??= new LogMonitor(LootGoblin.Default.LogLocation);
             if (!_isMonitoringLog)
             {
@@ -1632,20 +1795,22 @@ namespace LootGoblin.Forms
         private void btn_RefreshCurrentRaid_Click(object sender, EventArgs e)
         {
             Log.Debug($"[{nameof(btn_RefreshCurrentRaid_Click)}]");
-            UpdateRaidInformation();
+            Task.Run(UpdateRaidInformation);
         }
 
         private void btn_RemoveRaidTick_Click(object sender, EventArgs e)
         {
             Log.Debug($"[{nameof(btn_RemoveRaidTick_Click)}]");
-            var raidTick = _raidTicks.FirstOrDefault(x => x.Description == dgv_RaidTicks.SelectedRows[0].Cells[0].Value.ToString());
+            var raidTick = _raidTicks.FirstOrDefault(x =>
+                x.Description == dgv_RaidTicks.SelectedRows[0].Cells[0].Value.ToString());
             if (raidTick != null)
                 _raidTicks.Remove(raidTick);
 
-            raidTick = CurrentRaid?.Ticks.FirstOrDefault(x => x.Description == dgv_RaidTicks.SelectedRows[0].Cells[0].Value.ToString());
+            raidTick = CurrentRaid?.Ticks.FirstOrDefault(x =>
+                x.Description == dgv_RaidTicks.SelectedRows[0].Cells[0].Value.ToString());
             if (raidTick != null)
                 CurrentRaid?.Ticks.Remove(raidTick);
-            UpdateRaidInformation();
+            Task.Run(UpdateRaidInformation);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -1655,6 +1820,7 @@ namespace LootGoblin.Forms
         }
 
         private readonly Dictionary<DateTime, string> _randomTracker = new();
+
         private void btn_CreateRandomRoll_Click(object sender, EventArgs e)
         {
             var removeRolls = _randomTracker.Keys.Where(x => x + new TimeSpan(0, 0, 5, 0) < DateTime.Now);
@@ -1708,10 +1874,9 @@ namespace LootGoblin.Forms
             }
 
             Task.Run(async () =>
-                await ClipboardManager.CopyToClipboard($"Mains Roll {randomNumberString} | Alts Roll {Convert.ToInt32(randomNumberString) - 1} for: "));
+                await ClipboardManager.CopyToClipboard(
+                    $"Mains Roll {randomNumberString} | Alts Roll {Convert.ToInt32(randomNumberString) - 1} for: "));
         }
-
-        #endregion Events
 
         private void trv_LootRolls_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
@@ -1719,7 +1884,7 @@ namespace LootGoblin.Forms
             Log.Debug($"[{nameof(trv_LootRolls_NodeMouseClick)}]");
             try
             {
-                if (!e.Node.Text.Contains(" | "))
+                if (!e.Node.Text.Contains(" | ") || e.Node.Parent == null)
                     return;
                 //new TreeNode($"{playerRoll} | {playerName}");
                 var splitBidInfo = e.Node.Text.Split(" | ");
@@ -1736,5 +1901,34 @@ namespace LootGoblin.Forms
                 Log.Error($"[{nameof(trv_DkpBids_NodeMouseClick)}] {ex.InnerException}");
             }
         }
+
+        private void chkbx_UseAutomaticRaidTicks_CheckedChanged(object sender, EventArgs e)
+        {
+            LootGoblin.Default.UseAutomaticRaidTicks = ((CheckBox) sender).Checked;
+            LootGoblin.Default.Save();
+            if ((File.Exists("C:\\Windows\\System32\\drivers\\mouse.sys") &&
+                 File.Exists("C:\\Windows\\System32\\drivers\\keyboard.sys")) ||
+                !LootGoblin.Default.UseAutomaticRaidTicks) return;
+
+            var result = MessageBox.Show("Would you like to download and install Interceptor?",
+                "Download Keyboard and Mouse Drivers?", MessageBoxButtons.YesNo);
+            switch (result)
+            {
+                case DialogResult.Yes:
+                    Task.Run(DownloadAndInstallInterceptor);
+                    LoadInterceptor();
+                    break;
+                case DialogResult.No:
+                    MessageBox.Show("Automatic Raid Ticks will not work until you install Interceptor.");
+
+                    Driver.Unload();
+                    chkbx_UseAutomaticRaidTicks.Checked = false;
+                    LootGoblin.Default.UseAutomaticRaidTicks = false;
+                    LootGoblin.Default.Save();
+                    break;
+            }
+        }
+
+        #endregion Events
     }
 }

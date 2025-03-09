@@ -11,8 +11,8 @@ namespace LootGoblin.Windows
         /// <param name="pInputs">A Input structure for what is to be pressed.</param>
         /// <param name="cbSize">The size of the structure.</param>
         /// <returns>A message.</returns>
-        [DllImport("user32.dll", SetLastError = true)]
-        public static extern uint SendInput(uint nInputs, ref Messaging.Input pInputs, int cbSize);
+        //[DllImport("user32.dll", SetLastError = true)]
+        //public static extern uint SendInput(uint nInputs, ref Messaging.Input pInputs, int cbSize);
 
         [DllImport("USER32.DLL", CharSet = CharSet.Unicode)]
         public static extern nint FindWindow(string lpClassName, string lpWindowName);

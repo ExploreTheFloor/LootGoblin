@@ -16,6 +16,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Windows\Keyboard.cs" />
+    <Compile Remove="Windows\KeyboardHelper.cs" />
+    <Compile Remove="Windows\Messaging.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="H.InputSimulator" Version="1.5.0" />
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -24,6 +30,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Interceptor.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Interceptor.settings</DependentUpon>
+    </Compile>
     <Compile Update="LootGoblin.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
@@ -32,6 +43,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Interceptor.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Interceptor.Designer.cs</LastGenOutput>
+    </None>
     <None Update="LootGoblin.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>LootGoblin.Designer.cs</LastGenOutput>
@@ -43,6 +58,10 @@
 
   <ItemGroup>
     <Folder Include="Properties\DataSources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\GameAssistant\src\Net5\Framework\Interceptor\Interceptor.csproj" />
   </ItemGroup>
 
 </Project>

@@ -94,6 +94,7 @@
             AutoTickReminder = new System.ComponentModel.BackgroundWorker();
             trv_RaidDisplay = new TreeView();
             btn_RefreshCurrentRaid = new Button();
+            chkbx_UseAutomaticRaidTicks = new CheckBox();
             tabControl1.SuspendLayout();
             tabPage5.SuspendLayout();
             tabControl2.SuspendLayout();
@@ -162,6 +163,7 @@
             // 
             // tabPage6
             // 
+            tabPage6.Controls.Add(chkbx_UseAutomaticRaidTicks);
             tabPage6.Controls.Add(panel4);
             tabPage6.Controls.Add(dgv_RaidTicks);
             tabPage6.Controls.Add(btn_RemoveRaidTick);
@@ -252,7 +254,7 @@
             // 
             btn_RemoveRaidTick.Location = new Point(6, 380);
             btn_RemoveRaidTick.Name = "btn_RemoveRaidTick";
-            btn_RemoveRaidTick.Size = new Size(398, 23);
+            btn_RemoveRaidTick.Size = new Size(194, 23);
             btn_RemoveRaidTick.TabIndex = 38;
             btn_RemoveRaidTick.Text = "Remove";
             btn_RemoveRaidTick.UseVisualStyleBackColor = true;
@@ -743,6 +745,17 @@
             btn_RefreshCurrentRaid.UseVisualStyleBackColor = true;
             btn_RefreshCurrentRaid.Click += btn_RefreshCurrentRaid_Click;
             // 
+            // chkbx_UseAutomaticRaidTicks
+            // 
+            chkbx_UseAutomaticRaidTicks.AutoSize = true;
+            chkbx_UseAutomaticRaidTicks.Location = new Point(224, 383);
+            chkbx_UseAutomaticRaidTicks.Name = "chkbx_UseAutomaticRaidTicks";
+            chkbx_UseAutomaticRaidTicks.Size = new Size(180, 19);
+            chkbx_UseAutomaticRaidTicks.TabIndex = 39;
+            chkbx_UseAutomaticRaidTicks.Text = "Automatically Add Raid Ticks";
+            chkbx_UseAutomaticRaidTicks.UseVisualStyleBackColor = true;
+            chkbx_UseAutomaticRaidTicks.CheckedChanged += chkbx_UseAutomaticRaidTicks_CheckedChanged;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -849,5 +862,6 @@
         private Button btn_RemoveRaidTick;
         private Button btn_RefreshCurrentRaid;
         private Button btn_CreateRandomRoll;
+        private CheckBox chkbx_UseAutomaticRaidTicks;
     }
 }
