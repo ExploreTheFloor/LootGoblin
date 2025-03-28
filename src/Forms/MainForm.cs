@@ -45,20 +45,29 @@ namespace LootGoblin.Forms
                 LoadInterceptor();
             Task.Run(async () =>
             {
-                _characters = await _openDkp.GetCharacters();
-                _dkpSummary = await _openDkp.GetDKPSummary();
-                var raidManagement = new RaidManagement();
-                await raidManagement.BackUpRaidTickFiles();
-
-                _itemDictionary =
-                    JsonConvert.DeserializeObject<Dictionary<int, string>>(
-                        File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Items.Json"));
                 if (File.Exists($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"))
                 {
+                    Log.Debug($"[{nameof(MainForm)}] Loading: {AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json");
                     BossValues =
                         JsonConvert.DeserializeObject<BindingList<BossManagement>>(
                             File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json"));
                 }
+                else
+                {
+                    Log.Error($"[{nameof(MainForm)}] Unable to locate: {AppDomain.CurrentDomain.BaseDirectory}Settings\\BossManagement.Json");
+                }
+
+                _itemDictionary =
+                    JsonConvert.DeserializeObject<Dictionary<int, string>>(
+                        File.ReadAllText($"{AppDomain.CurrentDomain.BaseDirectory}Resources\\Items.Json"));
+
+                Log.Debug($"[{nameof(MainForm)}] Loading: Characters");
+                _characters = await _openDkp.GetCharacters();
+                Log.Debug($"[{nameof(MainForm)}] Loading: DKPSummary");
+                _dkpSummary = await _openDkp.GetDKPSummary();
+                var raidManagement = new RaidManagement();
+                Log.Debug($"[{nameof(MainForm)}] Backing Up Raid Tick Files");
+                await raidManagement.BackUpRaidTickFiles();
 
                 await BindObjectToTreeView(CurrentRaid, trv_RaidDisplay);
             });
@@ -77,6 +86,9 @@ namespace LootGoblin.Forms
         /// </summary>
         public void LoadInterceptor()
         {
+//#if DEBUG
+//            return;
+//#endif
             Driver = new Driver
             {
                 Options = new Options
@@ -99,14 +111,17 @@ namespace LootGoblin.Forms
                 ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\x64\interception.dll")
                 : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"Resources\x86\interception.dll");
 
+            Log.Debug($"[{nameof(LoadInterceptor)}] Path: {myLibraryFullPath}");
             // Load the appropriate DLL into the current process
             if (!File.Exists(myLibraryFullPath))
             {
+                Log.Debug($"[{nameof(LoadInterceptor)}] Unable to Load Keyboard Driver.  Automated Ticks will not work.");
                 MessageBox.Show("Unable to Load Keyboard Driver.  Automated Ticks will not work.",
                     "ERROR WITH KEYBOARD DRIVER", MessageBoxButtons.OK);
                 return;
             }
 
+            Log.Debug($"[{nameof(LoadInterceptor)}] Loading Interceptor Library.");
             NativeLibrary.Load(myLibraryFullPath);
             Driver.Load();
 
@@ -114,14 +129,16 @@ namespace LootGoblin.Forms
 
             if (Driver.Options.MouseDeviceId == 0)
             {
-                DialogResult dialogResult = MessageBox.Show(@"Please click ""Ok"" with your Mouse.",
+                Log.Debug($"[{nameof(LoadInterceptor)}] Finding Mouse Driver.");
+                MessageBox.Show(@"Please click ""Ok"" with your Mouse.",
                     "Mouse Detection", MessageBoxButtons.OK);
                 Interceptor.Default.MouseDeviceId = Driver.Options.MouseDeviceId;
             }
 
             if (Driver.Options.KeyboardDeviceId == 0)
             {
-                DialogResult dialogResult = MessageBox.Show(@"Please hit ""Enter"" on your Keyboard.",
+                Log.Debug($"[{nameof(LoadInterceptor)}] Finding Keyboard Driver.");
+                MessageBox.Show(@"Please hit ""Enter"" on your Keyboard.",
                     "Keyboard Detection", MessageBoxButtons.OK);
                 Interceptor.Default.KeyboardDeviceId = Driver.Options.KeyboardDeviceId;
             }
@@ -230,23 +247,77 @@ namespace LootGoblin.Forms
             }
         }
 
-        private Task SendRaidOutput()
+        private async Task SendRaidOutput()
         {
             var eqProcess = WinApi.GetProcessByName("eqgame").FirstOrDefault();
-            WinApi.SetForegroundWindow(eqProcess.MainWindowHandle);
+            if (eqProcess != null)
+            {
+                Log.Warning($"[{nameof(SendRaidOutput)}] located EQ Game! Sending /output RaidList");
+                WinApi.SetForegroundWindow(eqProcess.MainWindowHandle);
 
-            ClipboardManager.CopyToClipboard(@"/output RaidList");
-            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.DOWN);
-            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.UP);
-            Thread.Sleep(500);
-            Driver.Keyboard.SendKey(Keys.CONTROL, KeyState.DOWN);
-            Driver.Keyboard.SendKey(Keys.V, KeyState.DOWN);
-            Driver.Keyboard.SendKey(Keys.V, KeyState.UP);
-            Driver.Keyboard.SendKey(Keys.CONTROL, KeyState.UP);
-            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.DOWN);
-            Thread.Sleep(500);
-            Driver.Keyboard.SendKey(Keys.ENTER, KeyState.UP);
-            return Task.CompletedTask;
+                await ClipboardManager.CopyToClipboard(@"/output RaidList");
+                await Task.Delay(100);
+                await Driver.Keyboard.SendKey(Keys.ENTER, KeyState.DOWN);
+                await Task.Delay(100);
+                await Driver.Keyboard.SendKey(Keys.ENTER, KeyState.UP);
+                await Task.Delay(100);
+                await Driver.Keyboard.SendKey(Keys.CONTROL, KeyState.DOWN);
+                await Task.Delay(100);
+                await Driver.Keyboard.SendKey(Keys.V, KeyState.DOWN);
+                await Task.Delay(100);
+                await Driver.Keyboard.SendKey(Keys.V, KeyState.UP);
+                await Driver.Keyboard.SendKey(Keys.CONTROL, KeyState.UP);
+                await Task.Delay(100);
+                await Driver.Keyboard.SendKey(Keys.ENTER, KeyState.DOWN);
+                await Task.Delay(100);
+                await Driver.Keyboard.SendKey(Keys.ENTER, KeyState.UP);
+                await Task.Delay(1000);
+            }
+            else
+            {
+                Log.Warning($"[{nameof(SendRaidOutput)}] Unable to locate EQ Game!");
+            }
+        }
+
+        private int _autoTickCount = 1;
+
+        private async Task GetRaidAttendance()
+        {
+            Log.Debug($"[{nameof(GetRaidAttendance)}]");
+            try
+            {
+                var raidManagement = new RaidManagement();
+                var raidAttendance = await raidManagement.GetRaidAttendance();
+                if (!raidAttendance.Any())
+                {
+                    Log.Warning($"[{nameof(btn_AddAutoTick_Click)}] Unable to raid attendance!");
+                    return;
+                }
+
+                var characters = raidAttendance
+                    .Select(x => new CharacterTick
+                        {
+                            Name = x.Player,
+                            CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId
+                        }
+                    ).ToList();
+
+                var autoTick = new Tick
+                {
+                    Characters = characters,
+                    Description = $"{txtbx_RaidName.Text} - AutoTick: {_autoTickCount}",
+                    Value = txtbx_AutoTickDkp.Text
+                };
+                _autoTickCount++;
+                CurrentRaid.Ticks.Add(autoTick);
+                _raidTicks.Add(autoTick);
+                await UpdateRaidInformation();
+            }
+            catch (Exception ex)
+            {
+                Log.Error(
+                    $"[{nameof(GetRaidAttendance)}] {ex.Message}");
+            }
         }
 
         private void AddObjectPropertiesToTreeView(object? obj, TreeNode parentNode, string parentPropertyName = "")
@@ -377,12 +448,13 @@ namespace LootGoblin.Forms
         {
             if (messageToProcess == null)
                 return;
-            if (messageToProcess.Contains("Druzzil Ro tells the guild") && messageToProcess.Contains("has killed a"))
+            //Druzzil Ro tells the guild, 'Thorbizzle of Savage> has killed Silverwing in Veeshan's Peak!'
+            if (messageToProcess.Contains("Druzzil Ro tells the guild") && messageToProcess.Contains("has killed"))
             {
                 Task.Run(async () =>
                 {
                     await ParseKillMessage(messageToProcess);
-                    UpdateRaidInformation();
+                    await UpdateRaidInformation();
                 });
                 return;
             }
@@ -393,7 +465,7 @@ namespace LootGoblin.Forms
                 Task.Run(async () =>
                 {
                     await ParseAwardedLoot(messageToProcess);
-                    UpdateRaidInformation();
+                    await UpdateRaidInformation();
                 });
                 return;
             }
@@ -431,7 +503,7 @@ namespace LootGoblin.Forms
             //Druzzil Ro tells the guild, 'Remorse of Savage> has killed a dracoliche in Plane of Fear Instanced !'
             Log.Debug($"[{nameof(ParseKillMessage)}] {messageToProcess}");
 
-            var nameOfKill = messageToProcess.Split("has killed a")[1].Trim().Split(" in ")[0].Trim();
+            var nameOfKill = messageToProcess.Split("has killed")[1].Trim().Split(" in ")[0].Trim();
             if (string.IsNullOrWhiteSpace(nameOfKill))
             {
                 Log.Error($"[{nameof(ParseKillMessage)}] Unable to Parse Kill Message: {nameOfKill}!");
@@ -445,12 +517,24 @@ namespace LootGoblin.Forms
                 return;
             }
 
-            new ToastContentBuilder()
-                .AddText($"Boss Kill: {foundBoss}")
-                .AddText("Please type /output RaidList in game!")
-                .Show();
 
-            MessageBox.Show("Please type /output raidlist in game and then hit Ok.", $"{nameOfKill} - Raid Tick Kill");
+            if (LootGoblin.Default.UseAutomaticRaidTicks)
+            {
+                new ToastContentBuilder()
+                    .AddText($"Boss Kill: {foundBoss}")
+                    .AddText("Automatically sending /output RaidList in game!")
+                    .Show();
+                await SendRaidOutput();
+            }
+            else
+            {
+                new ToastContentBuilder()
+                    .AddText($"Boss Kill: {foundBoss}")
+                    .AddText("Please type /output RaidList in game!")
+                    .Show();
+                MessageBox.Show("Please type /output RaidList in game and then hit Ok.",
+                    $"{nameOfKill} - Raid Tick Kill");
+            }
 
             var raidManagement = new RaidManagement();
             var raidAttendance = await raidManagement.GetRaidAttendance();
@@ -470,6 +554,7 @@ namespace LootGoblin.Forms
                 Description = $"{txtbx_RaidName.Text} - Kill: {nameOfKill}",
                 Value = foundBoss.Dkp.ToString()
             };
+            Log.Information($"[{nameof(ParseKillMessage)}] {txtbx_RaidName.Text} - Kill: {nameOfKill}");
             CurrentRaid.Ticks.Add(bossKillTick);
             _raidTicks.Add(bossKillTick);
         }
@@ -492,7 +577,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(ParseAwardedLoot)}] {ex.InnerException}");
+                Log.Error($"[{nameof(ParseAwardedLoot)}] { ex.Message}");
             }
         }
 
@@ -526,7 +611,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(UpdateAwardedLoot)}] {ex.InnerException}");
+                Log.Error($"[{nameof(UpdateAwardedLoot)}] { ex.Message}");
             }
 
             return;
@@ -561,7 +646,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                //Log.Error($"[{nameof(ParseDkpBids)}] {messageToProcess} {ex.InnerException}");
+                //Log.Error($"[{nameof(ParseDkpBids)}] {messageToProcess} { ex.Message}");
                 return;
             }
 
@@ -641,7 +726,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(UpdateDkpBid)}] {ex.InnerException}");
+                Log.Error($"[{nameof(UpdateDkpBid)}] { ex.Message}");
             }
         }
 
@@ -742,7 +827,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(AddToCharacterItemList)}] {ex.InnerException}");
+                Log.Error($"[{nameof(AddToCharacterItemList)}] { ex.Message}");
             }
         }
 
@@ -817,7 +902,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(UpdateCharacterList)}] {ex.InnerException}");
+                Log.Error($"[{nameof(UpdateCharacterList)}] { ex.Message}");
             }
 
             return Task.CompletedTask;
@@ -875,7 +960,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(ParseLootRolls)}] {ex.InnerException}");
+                Log.Error($"[{nameof(ParseLootRolls)}] { ex.Message}");
             }
         }
 
@@ -965,7 +1050,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(UpdateLootRolls)}] {ex.InnerException}");
+                Log.Error($"[{nameof(UpdateLootRolls)}] { ex.Message}");
             }
         }
 
@@ -987,7 +1072,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(ParseLootedItems)}] {ex.InnerException}");
+                Log.Error($"[{nameof(ParseLootedItems)}] { ex.Message}");
             }
         }
 
@@ -1009,7 +1094,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(UpdateLootedItems)}] {ex.InnerException}");
+                Log.Error($"[{nameof(UpdateLootedItems)}] { ex.Message}");
                 return Task.CompletedTask;
             }
         }
@@ -1020,6 +1105,14 @@ namespace LootGoblin.Forms
 
         private Task Test()
         {
+            _characters = _openDkp.GetCharacters().Result;
+            return Task.CompletedTask;
+
+            Task.Run(async () =>
+            {
+                var raidManagement = new RaidManagement();
+                await raidManagement.GetRaidAttendance();
+            });
             //Task.Run(SendRaidOutput);
             return Task.CompletedTask;
 
@@ -1316,7 +1409,7 @@ namespace LootGoblin.Forms
                 }
                 catch (Exception ex)
                 {
-                    Log.Error($"[{nameof(btn_DuplicateLoot_Click)}] {ex.InnerException}");
+                    Log.Error($"[{nameof(btn_DuplicateLoot_Click)}] { ex.Message}");
                 }
             });
 
@@ -1458,7 +1551,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(trv_DkpBids_NodeMouseClick)}] {ex.InnerException}");
+                Log.Error($"[{nameof(trv_DkpBids_NodeMouseClick)}] { ex.Message}");
             }
         }
 
@@ -1478,7 +1571,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"{UpdateCharacterDkp} CurrentDkp: {currentDkp} {ex.InnerException}");
+                Log.Error($"{UpdateCharacterDkp} CurrentDkp: {currentDkp} { ex.Message}");
                 return Task.CompletedTask;
             }
         }
@@ -1520,42 +1613,14 @@ namespace LootGoblin.Forms
 
                 txtbx_TickDescription.Text = "";
                 txtbx_TickDkpValue.Text = "";
-                UpdateRaidInformation();
+                await UpdateRaidInformation();
             });
         }
-
-        private int _autoTickCount = 1;
 
         private void btn_AddAutoTick_Click(object sender, EventArgs e)
         {
             Log.Debug($"[{nameof(btn_AddAutoTick_Click)}]");
-            Task.Run(async () =>
-            {
-                var raidManagement = new RaidManagement();
-                var raidAttendance = await raidManagement.GetRaidAttendance();
-                if (!raidAttendance.Any())
-                {
-                    Log.Warning($"[{nameof(btn_AddAutoTick_Click)}] Unable to raid attendance!");
-                    return;
-                }
-
-                var characters = raidAttendance.Select(x => new CharacterTick
-                    {
-                        Name = x.Player, CharacterId = _characters.FirstOrDefault(y => y.Name == x.Player)?.CharacterId
-                    })
-                    .ToList();
-
-                var autoTick = new Tick
-                {
-                    Characters = characters,
-                    Description = $"{txtbx_RaidName.Text} - AutoTick: {_autoTickCount}",
-                    Value = txtbx_AutoTickDkp.Text
-                };
-                _autoTickCount++;
-                CurrentRaid.Ticks.Add(autoTick);
-                _raidTicks.Add(autoTick);
-                UpdateRaidInformation();
-            });
+            Task.Run(GetRaidAttendance);
         }
 
         private bool _timerStarted = false;
@@ -1591,7 +1656,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(btn_StartAutoTickTimer_Click)}] {ex.InnerException}");
+                Log.Error($"[{nameof(btn_StartAutoTickTimer_Click)}] { ex.Message}");
             }
 
         }
@@ -1618,9 +1683,22 @@ namespace LootGoblin.Forms
                     if (LootGoblin.Default.UseAutomaticRaidTicks)
                     {
                         var eqProcess = WinApi.GetProcessByName("eqgame").FirstOrDefault();
-                        WinApi.SetForegroundWindow(eqProcess.MainWindowHandle);
-                        Task.Run(SendRaidOutput);
-                        return;
+                        if (eqProcess != null)
+                        {
+                            WinApi.SetForegroundWindow(eqProcess.MainWindowHandle);
+                            new ToastContentBuilder()
+                                .AddText("Auto Tick")
+                                .AddText("Sending /output RaidList in game!")
+                                .Show();
+                            Task.Run(async () => 
+                            { 
+                                await SendRaidOutput();
+                                await GetRaidAttendance();
+                            });
+                            txtbx_AutoTickCountdownMinutes.Text = (int.Parse(txtbx_AutoTickTimer.Text) - 1).ToString();
+                            txtbx_AutoTickCountdownSeconds.Text = "60";
+                            return;
+                        }
                     }
 
                     BringToFront();
@@ -1638,7 +1716,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(timer1_Tick)}] {ex.InnerException}");
+                Log.Error($"[{nameof(timer1_Tick)}] { ex.Message}");
             }
         }
 
@@ -1898,7 +1976,7 @@ namespace LootGoblin.Forms
             }
             catch (Exception ex)
             {
-                Log.Error($"[{nameof(trv_DkpBids_NodeMouseClick)}] {ex.InnerException}");
+                Log.Error($"[{nameof(trv_DkpBids_NodeMouseClick)}] { ex.Message}");
             }
         }
 

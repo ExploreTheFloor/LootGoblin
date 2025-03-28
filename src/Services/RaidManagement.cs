@@ -5,11 +5,6 @@ namespace LootGoblin.Services
 {
     public class RaidManagement
     {
-        public async Task AddRaidTick()
-        {
-
-        }
-
         public Task BackUpRaidTickFiles()
         {
             try
@@ -22,7 +17,7 @@ namespace LootGoblin.Services
                     return Task.CompletedTask;
                 }
                 var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
-                var raidTickFiles = allFiles.Where(x => x.Contains("RaidTick"));
+                var raidTickFiles = allFiles.Where(x => x.ToLower().Contains("raidtick"));
                 foreach (var raidTickFile in raidTickFiles)
                 {
                     Log.Debug($@"Copying: {raidTickFile} to {AppDomain.CurrentDomain.BaseDirectory}BackUp\{DateTime.Now.ToShortDateString().Replace("/", "-")}\{Path.GetFileName(raidTickFile)}");
@@ -43,7 +38,7 @@ namespace LootGoblin.Services
             List<RaidMember> raidMembers = new List<RaidMember>();
             var eqDir = Path.GetDirectoryName(LootGoblin.Default.LogLocation);
             var allFiles = Directory.GetFiles(eqDir, "*.txt").ToList();
-            var raidTickFile = allFiles.FirstOrDefault(x => x.Contains("RaidTick"));
+            var raidTickFile = allFiles.FirstOrDefault(x => x.ToLower().Contains("raidtick"));
             if (raidTickFile != null)
             {
                 string[] lines = await File.ReadAllLinesAsync(raidTickFile);
